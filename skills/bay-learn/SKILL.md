@@ -1,63 +1,61 @@
 ---
 name: bay:learn
-description: Nạp kiến thức, quy tắc chiến lược, tài liệu nghiệp vụ (SOP/Docs), kết luận từ hội thoại khác (@[conversation:...]) hoặc tài nguyên vận hành vào đúng phân tầng nhận thức (.agents/cognition/MEMORY.md, .agents/knowledge/, STATE.md, data.db) của Autonomous Agent mà không làm phình Context Window. Kích hoạt khi người dùng gọi bay:learn, /bay:learn, hoặc yêu cầu dạy/nạp thêm kiến thức, tài liệu, dữ liệu cho Agent tự chủ.
+description: Nạp tri thức, quy tắc nghiệp vụ, tài liệu tham khảo, kết luận từ hội thoại (@[conversation:...]) hoặc tài nguyên vận hành vào hệ thống nhận thức phân tầng (.agents/cognition/, .agents/knowledge/, STATE.md, data.db). Kích hoạt khi người dùng gọi bay:learn, /bay:learn, hoặc yêu cầu nạp kiến thức/tài liệu cho Agent tự chủ.
 ---
 
-# 🧠 BAY:LEARN — Giao Thức Nạp Tri Thức & Tài Nguyên Tự Chủ (BHIT Tech AutonomY)
+# BAY:LEARN — Knowledge & Asset Ingestion Protocol
 
-Skill này đóng vai trò là **Bộ Phân Loại & Nạp Nhận Thức Thông Minh (Cognitive Knowledge Ingestor)** dành riêng cho AI Agent tự chủ vận hành theo kiến trúc `bhit-autonomy-plugin`.
-
-> [!IMPORTANT]
-> **Sự khác biệt với `/learn` mặc định**: Lệnh `/learn` thông thường ghi thẳng quy tắc vào `AGENTS.md`, làm phình System Prompt và tiêu tốn token ở mọi nhịp thức dậy. Ngược lại, **`bay:learn`** bảo vệ tuyệt đối sự tinh gọn của `AGENTS.md` bằng cách phân loại, nén và định tuyến tri thức vào đúng 5 tầng nhận thức (`.agents/cognition/`, `.agents/knowledge/`, `data.db`).
+Quy trình chuẩn hóa để tiếp nhận, phân loại và lưu trữ tri thức hoặc tài nguyên mới vào hệ thống nhận thức của Autonomous Agent.
 
 ---
 
-## QUY TRÌNH 5 BƯỚC NẠP TRI THỨC TỔNG QUÁT
+## 1. Giải Mã Nguồn Đầu Vào (Source Extraction)
 
-Khi Người vận hành yêu cầu nạp kiến thức, tài liệu hoặc tài nguyên mới cho Agent:
-
-### Bước 1: Giải Mã & Trích Xuất Nguồn Đầu Vào (Multi-Source Extraction)
-Xác định loại nguồn mà Người vận hành cung cấp:
-1. **Chỉ đạo trực tiếp trên khung chat (Direct Directive)**: Các quy tắc nghiệp vụ, chính sách, kinh nghiệm xử lý tình huống hoặc hướng dẫn mới.
-2. **Tham chiếu Hội thoại (`@[conversation:...]` Cross-Conversation Synthesis)**:
-   - Khi Người vận hành đính kèm một cuộc hội thoại khác (nơi họ đã thảo luận nháp hoặc phân tích phương án trước đó), hãy đọc file log `.system_generated/logs/transcript.jsonl` của cuộc hội thoại đó.
-   - Lọc bỏ các bước hỏi đáp trung gian, **chỉ rút trích Quyết định / Phương án cuối cùng đã được chốt (Final Consensus)** cùng các ràng buộc đi kèm.
-3. **Tài liệu & Cẩm nang (Documents / Files / URLs)**: Đường dẫn tới các tệp tài liệu (`.md`, `.txt`, `.pdf`, `.json`, v.v.) hoặc trang web.
-4. **Kho Tài nguyên & Dữ liệu Vận hành (Operational Assets & Datasets)**: Đường dẫn tới thư mục chứa tài nguyên thực thi, mẫu biểu hoặc tệp dữ liệu trên máy.
+Xác định loại nguồn dữ liệu được cung cấp:
+1. **Chỉ đạo trực tiếp (Direct Input)**: Quy tắc nghiệp vụ, chính sách, ràng buộc vận hành hoặc hướng dẫn thực thi.
+2. **Hội thoại tham chiếu (`@[conversation:...]` Cross-Conversation)**:
+   - Đọc file `.system_generated/logs/transcript.jsonl` của hội thoại được tham chiếu.
+   - Bỏ qua các bước thảo luận trung gian; chỉ trích xuất quyết định, phương án cuối cùng đã chốt và các ràng buộc đi kèm.
+3. **Tài liệu (Documents / URLs)**: Tệp văn bản (`.md`, `.txt`, `.pdf`, `.json`, v.v.) hoặc nội dung từ đường dẫn web.
+4. **Tài nguyên & Dữ liệu (Assets & Datasets)**: Thư mục chứa tệp đa phương tiện, biểu mẫu hoặc tập dữ liệu phục vụ vận hành.
 
 ---
 
-### Bước 2: Phân Loại & Định Tuyến Vào 5 Tầng Nhận Thức (Cognitive Routing)
-Tuyệt đối **KHÔNG** ghi nội dung kiến thức vào file `AGENTS.md` ở gốc dự án. Hãy phân loại từng đơn vị tri thức vừa trích xuất vào đúng tầng đích theo bảng sau:
+## 2. Phân Loại & Định Tuyến Lưu Trữ (Cognitive Routing)
 
-| Loại Tri Thức (Knowledge Category) | Tầng Đích Lưu Trữ (Target Layer) | Quy Tắc Xử Lý & Nạp (Ingestion Protocol) |
+Tuyệt đối không ghi nội dung tri thức nghiệp vụ vào `AGENTS.md` ở gốc dự án. Định tuyến từng đơn vị thông tin vào đúng tầng nhận thức:
+
+| Phân loại | Đích lưu trữ | Quy tắc xử lý |
 | :--- | :--- | :--- |
-| **1. Quy tắc vận hành, Chiến lược & Bài học đã chốt** *(Procedural & Strategic Rules)* | `.agents/cognition/MEMORY.md` | **Direct Promotion (Thăng cấp trực tiếp)**: Bỏ qua vùng đệm `DREAMS.md` vì đây là tri thức đã được Người vận hành phê duyệt. Đúc kết thành các gạch đầu dòng súc tích, gắn nhãn (`#strategy`, `#policy`, `#workflow`, `#domain-rule`) và ghi vào đúng chuyên mục trong `MEMORY.md`. |
-| **2. Tài liệu chuyên sâu, Quy trình SOP, Kiến thức dài** *(Deep Reference Docs > 30 dòng)* | `.agents/knowledge/<ten-tai-lieu>.md` + Chỉ mục trong `MEMORY.md` | **Progressive Disclosure (Nạp theo nhu cầu)**: Lưu toàn văn nội dung đã chuẩn hóa vào `.agents/knowledge/<ten-tai-lieu>.md`. Trong `MEMORY.md`, chỉ thêm **1 dòng chỉ mục kèm đường dẫn `[Tên tài liệu](file:///.../.agents/knowledge/<ten-tai-lieu>.md)`** và ghi rõ: *"Chỉ dùng `read_file` đọc khi thực hiện tác vụ [X]"*. |
-| **3. Tài nguyên Thực thi & Tập dữ liệu** *(Operational Assets & Datasets)* | Cơ sở dữ liệu dự án (`data.db`) + `.agents/cognition/STATE.md` | Dùng script/lệnh quét danh mục và metadata của tài nguyên, nạp vào bảng quản lý tương ứng trong `data.db` (tự tạo bảng/cột nếu chưa có). Đồng thời cập nhật đường dẫn và trạng thái sẵn sàng vào mục `## 3. Hạ tầng Dữ liệu Dự án` trong `STATE.md`. |
-| **4. Giọng văn, Phong cách giao tiếp & Xưng hô** *(Persona & Tone Guidelines)* | `.agents/cognition/CHARACTER.md` | Vì `bay:learn` là lệnh chủ động từ Người vận hành, bạn được phép dùng `edit_file` cập nhật bổ sung quy chuẩn giao tiếp vào `CHARACTER.md`. |
-| **5. Mục tiêu KPI cốt lõi & Ranh giới cấm** *(Core Goals & Taboos)* | `.agents/cognition/SOUL.md` | Nếu Người vận hành chủ động yêu cầu thay đổi Mục tiêu hoặc Điều cấm qua `bay:learn`, dùng `edit_file` cập nhật `SOUL.md` (nếu phát hiện mâu thuẫn nghiêm trọng với sứ mệnh cũ, hãy nêu rõ để xác nhận). |
+| **1. Quy tắc vận hành & Chiến lược ngắn** | `.agents/cognition/MEMORY.md` | Đúc kết thành gạch đầu dòng súc tích kèm nhãn phân loại (`#strategy`, `#policy`, `#workflow`, `#rule`) và ghi trực tiếp vào chuyên mục tương ứng. |
+| **2. Tài liệu chuyên sâu (> 30 dòng)** | `.agents/knowledge/<slug>.md` + Chỉ mục tại `MEMORY.md` | Lưu nội dung chi tiết vào `.agents/knowledge/<slug>.md`. Tại `MEMORY.md`, chỉ ghi 1 dòng chỉ mục kèm đường dẫn `[<Tiêu đề>](file:///.../.agents/knowledge/<slug>.md)` và điều kiện kích hoạt đọc (`read_file`). |
+| **3. Tài nguyên thực thi & Tập dữ liệu** | Cơ sở dữ liệu (`data.db`) + `.agents/cognition/STATE.md` | Quét metadata của tài nguyên, cập nhật vào bảng dữ liệu tương ứng trong `data.db` và ghi nhận đường dẫn tại mục `## 3. Hạ tầng Dữ liệu Dự án` trong `STATE.md`. |
+| **4. Giọng văn & Phong cách giao tiếp** | `.agents/cognition/CHARACTER.md` | Dùng `edit_file` cập nhật bổ sung quy chuẩn giao tiếp theo yêu cầu trực tiếp của Người vận hành. |
+| **5. Mục tiêu cốt lõi & Ranh giới cấm** | `.agents/cognition/SOUL.md` | Dùng `edit_file` cập nhật mục tiêu hoặc ranh giới hoạt động theo chỉ đạo trực tiếp của Người vận hành (cảnh báo nếu mâu thuẫn với mục tiêu hiện hữu). |
 
 ---
 
-### Bước 3: Khử Trùng Lặp & Giải Quyết Xung Đột (Deduplication & Conflict Resolution)
-Trước khi dùng `edit_file` ghi vào `MEMORY.md` hoặc `.agents/knowledge/`:
-1. Đọc toàn bộ phần liên quan trong `MEMORY.md`.
-2. Nếu kiến thức mới **bổ sung** cho quy tắc cũ $\rightarrow$ Gộp (Merge) vào cùng một mục để giữ cấu trúc gọn gàng.
-3. Nếu kiến thức mới **thay thế hoặc phủ định** quy tắc cũ $\rightarrow$ Cập nhật đè lên quy tắc cũ (Supersede), tuyệt đối không để tồn tại hai quy tắc mâu thuẫn nhau trong `MEMORY.md`.
+## 3. Khử Trùng Lặp & Xử Lý Xung Đột (Deduplication)
+
+Trước khi ghi vào `MEMORY.md` hoặc `.agents/knowledge/`:
+1. Đọc nội dung hiện có tại chuyên mục đích.
+2. **Hợp nhất (Merge)** nếu thông tin mới bổ sung cho quy tắc đã tồn tại.
+3. **Ghi đè (Supersede)** nếu thông tin mới thay thế quy tắc cũ, đảm bảo không tồn tại hai quy tắc mâu thuẫn nhau.
 
 ---
 
-### Bước 4: Liên Kết Với Các Vòng Lặp Đang Mở (Active Loop Binding)
-- Đọc mục `## 2. Các vòng lặp đang mở (Open Loops)` trong `.agents/cognition/STATE.md`.
-- Nếu kiến thức hoặc tài nguyên vừa nạp phục vụ trực tiếp cho các nhiệm vụ sắp tới trong lịch trình, hãy bổ sung ghi chú tham chiếu ngắn gọn vào nhiệm vụ đó trong `STATE.md` để Subagent `autonomous-worker` biết và áp dụng ngay ở nhịp thức dậy kế tiếp.
+## 4. Liên Kết Vòng Lặp Hiện Hành (Loop Binding)
+
+- Kiểm tra mục `## 2. Các vòng lặp đang mở (Open Loops)` trong `.agents/cognition/STATE.md`.
+- Nếu tri thức hoặc tài nguyên vừa nạp liên quan trực tiếp đến các tác vụ sắp thực thi, bổ sung ghi chú tham chiếu vào tác vụ đó trong `STATE.md`.
 
 ---
 
-### Bước 5: Ghi Nhật Ký Tín Hiệu & Báo Cáo Xác Nhận (Audit & Report)
-1. Ghi 1 dòng log vào mục `## 5. Nhật ký Tín hiệu Trong ngày (Daily Signals)` trong `STATE.md`:
-   - Định dạng: `- [YYYY-MM-DD HH:MM] #bay-learn: Đã nạp tri thức [<Tóm tắt>] vào [<Tầng lưu trữ>].`
-2. In báo cáo xác nhận ngắn gọn ra màn hình chat cho Người vận hành theo mẫu:
-   - **Tri thức / Tài nguyên đã trích xuất**: ...
-   - **Tầng nhận thức đã lưu trữ**: (Kèm link `file:///` tới các file vừa cập nhật).
-   - **Tác động vận hành**: Sẽ được áp dụng như thế nào ở các chu kỳ `/schedule` tiếp theo.
+## 5. Kiểm Toán & Xác Nhận (Audit & Output)
+
+1. Ghi nhật ký vào mục `## 5. Nhật ký Tín hiệu Trong ngày (Daily Signals)` trong `STATE.md`:
+   - Định dạng: `- [YYYY-MM-DD HH:MM] #bay-learn: Nạp [<Tóm tắt>] vào [<Đích lưu trữ>].`
+2. Báo cáo ngắn gọn kết quả thực thi:
+   - Nội dung đã trích xuất.
+   - Các tệp tin nhận thức đã cập nhật (kèm liên kết `file:///`).
+   - Các tác vụ trong `STATE.md` sẽ áp dụng tri thức này.

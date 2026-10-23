@@ -1,11 +1,11 @@
 {
   "name": "bhit-autonomy-plugin",
   "displayName": "BHIT Autonomy Engine",
-  "description": "Hệ điều hành AI Agent tự chủ vận hành 24/7 trực tiếp trên Antigravity theo mô hình Hybrid /schedule, tham chiếu Markdown phân tầng (.agents/cognition/), chu trình Dreamer 3 pha OpenClaw v2 và mở rộng kỹ năng Proposal-First 100% Non-Blocking.",
-  "version": "1.2.0",
+  "description": "Hệ điều hành AI Agent tự chủ 24/7 trên Antigravity thông qua lịch trình /schedule, kiến trúc nhận thức phân tầng (.agents/cognition/), nạp tri thức bay:learn, hợp nhất bộ nhớ 3 pha và đề xuất kỹ năng Non-Blocking.",
+  "version": "1.2.1",
   "suggestedPrompts": [
     "Khởi tạo hệ thống tự chủ cho Agent theo Goal trong SOUL.md",
-    "bay:learn Nạp kiến thức và kết luận đã chốt vào hệ thống nhận thức của Agent",
-    "Kích hoạt chu trình Dreamer 3 pha tổng hợp bài học hôm nay vào MEMORY.md"
+    "bay:learn Nạp tri thức và tài liệu mới vào hệ thống nhận thức",
+    "Kích hoạt chu trình cognitive-dreamer hợp nhất ký ức vào MEMORY.md"
   ]
 }

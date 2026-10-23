@@ -1,105 +1,85 @@
 ---
 name: bh-autonomous-agent
-description: Khởi tạo, vận hành và quản lý AI Agent Tự chủ 24/7 trực tiếp trên Antigravity theo mô hình Hybrid /schedule, tham chiếu Markdown phân tầng (.agents/cognition/), chu trình Dreamer 3 pha OpenClaw v2 và mở rộng kỹ năng Proposal-First 100% Non-Blocking.
+description: Khởi tạo, vận hành và điều phối AI Agent Tự chủ 24/7 trên Antigravity thông qua lịch trình /schedule, kiến trúc nhận thức phân tầng (.agents/cognition/), chu trình hợp nhất bộ nhớ 3 pha và cơ chế đề xuất kỹ năng Non-Blocking.
 ---
 
 # BHIT Autonomous Agent Kernel
 
-Skill này đóng vai trò là "Bộ điều phối Tự chủ" cho Agent hoạt động trong bất kỳ Workspace dự án nào trên Google Antigravity.
+Quy trình khởi tạo, vận hành chu kỳ tự chủ và bảo trì kiến trúc nhận thức cho Autonomous Agent.
 
 ---
 
-## 1. QUY TRÌNH KHỞI TẠO DỰ ÁN MỚI (DAY 0 BOOTSTRAP)
+## 1. Khởi Tạo Dự Án Tự Chủ (Day 0 Bootstrap)
 
-Khi Người vận hành mở một Workspace mới và yêu cầu: *"Khởi tạo hệ thống tự chủ cho Agent"* hoặc *"Bắt đầu chạy tự chủ"*:
+Khi nhận yêu cầu khởi tạo hệ thống tự chủ trong Workspace:
 
-1. **Kiểm tra và Khởi tạo Thư mục Nhận thức**:
-   - Tạo thư mục `.agents/cognition/` (nếu chưa có).
-   - Sao chép các file mẫu từ thư mục `templates/` của skill này vào dự án:
-     - `AGENTS.router.md` ➔ Tạo thành file `AGENTS.md` tại gốc dự án.
-     - `SOUL.template.md` ➔ `.agents/cognition/SOUL.md` (Điền Persona, Goal và Điều cấm theo yêu cầu của dự án).
-     - `CHARACTER.template.md` ➔ `.agents/cognition/CHARACTER.md`
-     - `STATE.template.md` ➔ `.agents/cognition/STATE.md`
-     - `DREAMS.template.md` ➔ `.agents/cognition/DREAMS.md`
-     - `MEMORY.template.md` ➔ `.agents/cognition/MEMORY.md`
-     - `INBOX.template.md` ➔ `.agents/cognition/INBOX.md`
+1. **Khởi tạo Cấu trúc Nhận thức**:
+   - Tạo thư mục `.agents/cognition/`.
+   - Sao chép và điền thông tin ban đầu từ thư mục `templates/` của skill này vào dự án:
+     - `AGENTS.router.md` $\rightarrow$ `AGENTS.md` (tại gốc dự án)
+     - `SOUL.template.md` $\rightarrow$ `.agents/cognition/SOUL.md`
+     - `CHARACTER.template.md` $\rightarrow$ `.agents/cognition/CHARACTER.md`
+     - `STATE.template.md` $\rightarrow$ `.agents/cognition/STATE.md`
+     - `DREAMS.template.md` $\rightarrow$ `.agents/cognition/DREAMS.md`
+     - `MEMORY.template.md` $\rightarrow$ `.agents/cognition/MEMORY.md`
+     - `INBOX.template.md` $\rightarrow$ `.agents/cognition/INBOX.md`
 
-2. **Tự Kiến Tạo Bộ Nhớ & Dữ Liệu Nghiệp Vụ Theo Goal (Self-Architecting Storage)**:
-   - Đọc các `Goals` trong `SOUL.md`.
-   - Quyết định xem dự án có cần cơ sở dữ liệu lớn không:
-     - Nếu cần quản lý nhiều đối tượng (VD: khách hàng, bài đăng, kịch bản, video): Tự tạo file SQLite `data.db` và viết một script helper nhỏ (VD: `scripts/manage_data.py`).
-     - Ghi thông tin cấu trúc dữ liệu vào mục `## 3. Hạ tầng Dữ liệu Dự án` trong `STATE.md`.
+2. **Khởi tạo Hạ tầng Lưu trữ (Self-Architecting Storage)**:
+   - Dựa trên `Goals` trong `SOUL.md`, thiết lập cơ sở dữ liệu dự án (ví dụ: SQLite `data.db` và script quản lý `scripts/manage_data.py`) nếu cần theo dõi các thực thể có cấu trúc.
+   - Ghi nhận thông tin hạ tầng vào mục `## 3. Hạ tầng Dữ liệu Dự án` trong `STATE.md`.
 
-3. **Cài Đặt Nhịp Đập Tự Chủ Ban Đầu (`/schedule`) & Ràng Buộc Lịch Trình 1:1**:
-   - **Bước 3a (Cron nền an toàn)**: Sử dụng công cụ `schedule` để thiết lập Cron nền:
-     - `CronExpression`: `"0 */2 * * *"` (mỗi 2 tiếng)
-     - `IsDaemon`: `true`
-     - `Prompt`: `"Kiểm tra bàn làm việc STATE.md và thực thi chu kỳ tự chủ kế tiếp."`
-   - **Bước 3b (One-shot Timer cho Task đầu tiên trong `STATE.md`)**:
-     - ⚠️ **BẮT BUỘC**: Nếu trong `STATE.md` vừa lập danh sách các công việc theo khung giờ cụ thể (VD: `16:00`, `17:00`, `19:30`), việc ghi chữ vào `STATE.md` **không** tự tạo bộ hẹn giờ!
-     - Bạn **PHẢI** tính số giây từ thời điểm hiện tại đến mốc giờ của công việc đầu tiên và gọi thêm 1 lệnh `schedule(DurationSeconds: <số_giây>, Prompt: "Thực thi công việc [Tên Task] theo STATE.md")` ngay lập tức (hoặc thực thi luôn nếu đã tới giờ).
-     - Ghi rõ cả 2 `TaskId` (Cron nền + One-shot Timer) vào bảng Lịch trình trong `STATE.md`.
-   - 🚫 **Tuyệt đối không hỏi ngược thụ động**: Không bao giờ kết thúc Bootstrap bằng câu hỏi *"Bạn muốn bắt đầu việc nào trước?"*. Hãy chủ động kích hoạt/hẹn giờ tự động 100%.
+3. **Thiết lập Lịch trình Tự chủ (`/schedule`)**:
+   - **Cron định kỳ (Heartbeat)**: Gọi công cụ `schedule` với `CronExpression` (ví dụ: `"0 */2 * * *"`), `IsDaemon: true`.
+   - **One-shot Timer cho tác vụ kế tiếp**: Tính số giây từ thời điểm hiện tại đến mốc thực thi của tác vụ đầu tiên trong `STATE.md` và gọi `schedule(DurationSeconds: <số_giây>)` (hoặc thực thi ngay nếu đã đến hạn).
+   - Ghi nhận đầy đủ các mã `TaskId` vào bảng lịch trình trong `STATE.md`.
+   - Kết thúc bước khởi tạo và tự động chuyển sang trạng thái vận hành mà không dừng lại chờ câu trả lời xác nhận thủ công.
 
 ---
 
-## 2. QUY TRÌNH VẬN HÀNH CHU KỲ TỰ CHỦ (OODA LOOP TRÊN MỖI NHỊP WAKEUP)
+## 2. Chu Kỳ Vận Hành Tự Chủ (OODA Loop)
 
-Mỗi khi được `/schedule` đánh thức hoặc sau một sự kiện:
+Tại mỗi nhịp thức dậy từ `/schedule`:
 
 ```text
 [WAKEUP]
    │
-   ├── 1. OBSERVE: Đọc STATE.md và INBOX.md (Nắm tiến độ & phản hồi mới)
-   │
-   ├── 2. ORIENT: Đối chiếu khoảng cách đến Goal trong SOUL.md
-   │
-   ├── 3. DECIDE:
-   │       ├── Đủ kỹ năng & Có việc cần làm ➔ Chuyển sang ACT
-   │       ├── Thiếu kỹ năng ➔ Ghi Proposal vào INBOX.md + Bắn Toast Alert
-   │       └── Cuối ngày / Ca đêm ➔ Kích hoạt Chu trình Dreamer 3 pha
-   │
-   ├── 4. ACT:
-   │       └── Giao việc nặng cho Subagent (invoke_subagent) để giữ Context nhẹ
-   │
-   └── 5. REFLECT & SCHEDULE:
-           └── Cập nhật STATE.md, ghi Daily Signals và đặt Timer hẹn giờ tiếp theo.
+   ├── 1. OBSERVE : Đọc STATE.md và INBOX.md
+   ├── 2. ORIENT  : Đối chiếu tiến độ hiện tại với Goals trong SOUL.md
+   ├── 3. DECIDE  :
+   │       ├── Đủ kỹ năng & Có tác vụ đến hạn ➔ Chuyển sang ACT
+   │       ├── Thiếu kỹ năng cần thiết       ➔ Ghi đề xuất vào INBOX.md + Phát Toast Alert
+   │       └── Cuối ngày / Ca hợp nhất ký ức  ➔ Gọi Subagent cognitive-dreamer
+   ├── 4. ACT     : Giao tác vụ thực thi cho Subagent autonomous-worker
+   └── 5. SCHEDULE: Cập nhật STATE.md, ghi Daily Signals và đặt schedule(DurationSeconds) cho mốc kế tiếp
 ```
 
 ---
 
-## 3. PHÁT THÔNG BÁO WINDOWS TOAST (100% NON-BLOCKING)
+## 3. Cơ Chế Thông Báo Non-Blocking (`INBOX.md`)
 
-Khi ghi đề xuất mới vào `INBOX.md` (hoặc có câu hỏi quan trọng cần xin ý kiến):
-- **TUYỆT ĐỐI KHÔNG DÙNG `ask_question`** (để tránh dừng luồng `/schedule`).
-- Chạy lệnh PowerShell để đẩy thông báo Desktop Toast kèm âm báo:
-  ```powershell
-  powershell -ExecutionPolicy Bypass -File "$HOME/.gemini/config/plugins/bhit-autonomy-plugin/skills/bh-autonomous-agent/scripts/notify-inbox.ps1" -Title "[Tên Agent] INBOX MỚI" -Message "[Tóm tắt đề xuất / câu hỏi] - Xem tại INBOX.md"
-  ```
-- In thông báo ra khung chat rồi kết thúc lượt ngay.
-
----
-
-## 4. CHU TRÌNH DREAMER 3 PHA (OPENCLAW v2 RÚT GỌN)
-
-Vào cuối mỗi ngày (hoặc ca đêm theo `/schedule`):
-1. **Gọi Subagent `cognitive-dreamer`**:
-   - Dùng `invoke_subagent` khởi chạy Subagent loại `cognitive-dreamer`.
-2. **Quy trình 3 pha**:
-   - **Pha 1 (Light Sleep)**: Quét mục `Daily Signals` trong `STATE.md`, lọc trùng, gom tín hiệu có giá trị.
-   - **Pha 2 (REM Sleep)**: Đối chiếu với `DREAMS.md` để phát hiện quy luật lặp lại, cập nhật Candidate Truths.
-   - **Pha 3 (Deep Sleep)**: Thăng cấp chân lý đủ điều kiện (`hits >= 3` hoặc đã `Adopt`) sang `MEMORY.md`, cắt tỉa quy tắc cũ trong `MEMORY.md`, ghi Dream Diary vào `DREAMS.md` và làm sạch nhật ký ngày trong `STATE.md`.
+Khi phát sinh đề xuất kỹ năng mới hoặc câu hỏi chiến lược trong lúc chạy tự động:
+1. Không gọi công cụ `ask_question` để tránh làm gián đoạn tiến trình `/schedule`.
+2. Ghi đề xuất vào `.agents/cognition/INBOX.md`.
+3. Phát thông báo Desktop Toast qua PowerShell:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File "$HOME/.gemini/config/plugins/bhit-autonomy-plugin/skills/bh-autonomous-agent/scripts/notify-inbox.ps1" -Title "[Tên Agent] INBOX" -Message "[Tóm tắt đề xuất] - Xem tại INBOX.md"
+   ```
 
 ---
 
-## 5. CẬP NHẬT PLUGIN & ĐỒNG BỘ DỰ ÁN CŨ (NON-DESTRUCTIVE MIGRATION)
+## 4. Chu Trình Hợp Nhất Ký Ức 3 Pha (`cognitive-dreamer`)
 
-### 5.1. Khi Người vận hành yêu cầu cập nhật Plugin từ GitHub:
-- Chạy lệnh `git -C "$HOME/.gemini/config/plugins/bhit-autonomy-plugin" pull` để kéo bản cập nhật mới nhất về máy.
-- Chạy `agy plugin validate "$HOME/.gemini/config/plugins/bhit-autonomy-plugin" --strict` để xác nhận tính toàn vẹn.
+Vào cuối mỗi chu kỳ ngày, gọi Subagent `cognitive-dreamer` để thực hiện:
+1. **Light Sleep**: Đọc `Daily Signals` trong `STATE.md`, lọc nhiễu và gom nhóm tín hiệu thực tế.
+2. **REM Sleep**: Đối chiếu tín hiệu trong ngày với các giả thuyết (`Candidate Truths`) trong `DREAMS.md`, cập nhật tần suất lặp lại (`hits`) và độ tin cậy (`confidence`).
+3. **Deep Sleep**: Thăng cấp các quy luật đạt ngưỡng (`hits >= 3`, `confidence >= 0.85` hoặc đã được phê duyệt) vào `MEMORY.md`, lược bỏ quy tắc lỗi thời, ghi nhật ký vào `DREAMS.md` và làm sạch `Daily Signals` trong `STATE.md`.
 
-### 5.2. Khi nâng cấp một Dự án đã khởi tạo từ phiên bản cũ (Smart Schema Merge):
-- **Tự động có hiệu lực ngay (Zero-Touch)**: Các thay đổi về Luật vận hành (`rules/AGENTS.md`), quyền công cụ của Subagent (`agents/*.md`), và quy trình trong `SKILL.md` nằm ở tầng Plugin toàn cục nên **tự động áp dụng ngay lập tức** ở nhịp `/schedule` kế tiếp của mọi dự án cũ mà không cần sửa file dự án.
-- **Đồng bộ cấu trúc Template (`STATE.md`, `DREAMS.md`, `AGENTS.md`) không mất dữ liệu**:
-  - ⚠️ **TUYỆT ĐỐI CẤM** copy đè file từ `templates/` lên các file đang chạy trong `.agents/cognition/` của dự án (vì sẽ làm mất Goal, Ký ức và Tiến độ đang chạy!).
-  - Chỉ dùng `read_file` đối chiếu file hiện tại của dự án với file trong `templates/`, sau đó dùng `edit_file` **chèn bổ sung các mục/cột còn thiếu** (ví dụ: bổ sung cột `TaskId` vào bảng `## 4. NHỊP ĐẬP /schedule HIỆN HÀNH` trong `STATE.md`) và giữ nguyên 100% dữ liệu nghiệp vụ hiện có.
+---
+
+## 5. Cập Nhật Plugin & Đồng Bộ Cấu Trúc (Non-Destructive Migration)
+
+1. **Cập nhật Plugin**:
+   - Chạy `git -C "$HOME/.gemini/config/plugins/bhit-autonomy-plugin" pull`.
+2. **Đồng bộ cấu trúc nhận thức cho dự án hiện hữu**:
+   - Không ghi đè các tệp từ `templates/` lên các tệp đang hoạt động trong `.agents/cognition/`.
+   - So sánh cấu trúc tệp hiện tại với `templates/` và dùng `edit_file` bổ sung các mục/trường mới còn thiếu, bảo toàn toàn bộ dữ liệu hiện có của dự án.

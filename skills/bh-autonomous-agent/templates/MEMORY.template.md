@@ -1,21 +1,21 @@
-# 🧠 MEMORY.md - KÝ ỨC DÀI HẠN & BÀI HỌC BỀN VỮNG
+# 🧠 MEMORY.md - KÝ ỨC DÀI HẠN & QUY TẮC BỀN VỮNG
 
-> ✏️ **CHÂN LÝ ĐÃ KIỂM CHỨNG**: Chỉ nhận các bài học đã vượt qua Promotion Gate của OpenClaw v2 (từ `DREAMS.md`) hoặc các nguyên tắc đã được Người vận hành chốt trực tiếp qua Phản biện (`ADOPT` / `ADAPT`).
-
----
-
-## 1. NGUYÊN TẮC NGHIỆP VỤ & KINH NGHIỆM THỰC CHIẾN ĐÃ XÁC THỰC
-*Những quy tắc đã được chứng minh mang lại hiệu quả cao nhất cho Goal:*
-- `[BÀI HỌC 01]`: [Mô tả chi tiết bài học / quy tắc đã kiểm chứng] *(Đã kiểm chứng: YYYY-MM-DD | Confidence: 0.95)*
+> ✏️ **TRI THỨC ĐÃ XÁC THỰC**: Lưu trữ các quy tắc đã vượt qua ngưỡng kiểm chứng từ `DREAMS.md`, các tri thức nạp qua `bay:learn` hoặc các nguyên tắc đã thống nhất với Người vận hành (`ADOPT` / `ADAPT`).
 
 ---
 
-## 2. PHẢN BIỆN CHUYÊN GIA & ĐỒNG THUẬN VỚI NGƯỜI VẬN HÀNH (ADOPT / ADAPT)
-*Những bài học được đúc kết từ các cuộc trao đổi, phản biện chiến lược với Sếp:*
-- `[THỐNG NHẤT 01]`: [Góp ý của Sếp + Cách tiếp thu có chọn lọc của Agent] *(Chốt ngày: YYYY-MM-DD)*
+## 1. QUY TẮC NGHIỆP VỤ & CHIẾN LƯỢC VẬN HÀNH
+*Những nguyên tắc đã được kiểm chứng hoặc phê duyệt áp dụng dài hạn:*
+- `[QUY TẮC 01]`: `[Mô tả quy tắc và ngữ cảnh áp dụng]` *(Cập nhật: YYYY-MM-DD)*
 
 ---
 
-## 3. MẪU LỖI CẦN TRÁNH TUYỆT ĐỐI (ANTI-PATTERNS)
-*Những sai lầm kỹ thuật hoặc cách tiếp cận không hiệu quả đã được kiểm chứng:*
-- `[LỖI CẦN TRÁNH 01]`: Không gửi tin nhắn dạng văn bản dài quá 200 chữ trong lần tiếp cận đầu tiên.
+## 2. CHỈ MỤC TÀI LIỆU CHUYÊN SÂU (ON-DEMAND KNOWLEDGE INDEX)
+*Danh mục các tài liệu tham khảo lưu tại `.agents/knowledge/` (chỉ đọc bằng `read_file` khi thực thi tác vụ liên quan):*
+- *(Chưa có tài liệu đính kèm)*
+
+---
+
+## 3. MẪU LỖI CẦN TRÁNH (ANTI-PATTERNS)
+*Những phương thức tiếp cận không hiệu quả hoặc sai lầm kỹ thuật cần tránh lặp lại:*
+- `[ANTI-PATTERN 01]`: `[Mô tả hành vi cần tránh]`
