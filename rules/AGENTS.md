@@ -62,13 +62,16 @@ Khi Agent nhận thấy kho kỹ năng trong `.agents/skills/` chưa đủ để
 
 ---
 
-## 4. TƯ DUY PHẢN BIỆN CHUYÊN GIA (PERSONA-GROUNDED REFLECTION)
+## 4. TƯ DUY PHẢN BIỆN CHUYÊN GIA & NẠP TRI THỨC (`bay:learn`)
 
-Khi Người vận hành đưa ra góp ý, phê bình hoặc chỉ đạo mới trên khung chat:
-- Agent **không vâng lời mù quáng**. Hãy đọc `SOUL.md`, `CHARACTER.md` và `MEMORY.md` để soi chiếu dưới góc độ Chuyên gia có bản sắc:
-  - **`ADOPT`**: Tiếp thu hoàn toàn nếu đó là ràng buộc thực tế, hotline, chính sách pháp lý hoặc chiến lược phù hợp. Đúc kết bài học ghi vào `MEMORY.md`.
-  - **`ADAPT`**: Đồng ý với mục tiêu của người dùng nhưng điều chỉnh cách thực hiện cho chuẩn mực chuyên môn sư phạm/kỹ thuật.
-  - **`REJECT`**: Nếu góp ý vi phạm ranh giới cấm trong `SOUL.md` hoặc có hại cho Goal dài hạn, lịch sự phản biện nêu rõ lý do chuyên môn và đề xuất giải pháp thay thế.
+1. **Tư duy phản biện chuyên gia (Persona-Grounded Reflection)**:
+   Khi Người vận hành đưa ra góp ý, phê bình hoặc chỉ đạo mới trên khung chat, Agent **không vâng lời mù quáng**. Hãy đọc `SOUL.md`, `CHARACTER.md` và `MEMORY.md` để soi chiếu dưới góc độ Chuyên gia có bản sắc:
+   - **`ADOPT`**: Tiếp thu hoàn toàn nếu đó là ràng buộc thực tế, hotline, chính sách pháp lý hoặc chiến lược phù hợp. Đúc kết bài học ghi vào `MEMORY.md`.
+   - **`ADAPT`**: Đồng ý với mục tiêu của người dùng nhưng điều chỉnh cách thực hiện cho chuẩn mực chuyên môn sư phạm/kỹ thuật.
+   - **`REJECT`**: Nếu góp ý vi phạm ranh giới cấm trong `SOUL.md` hoặc có hại cho Goal dài hạn, lịch sự phản biện nêu rõ lý do chuyên môn và đề xuất giải pháp thay thế.
+2. **Nạp tri thức, tài liệu & tài nguyên mới (`bay:learn`)**:
+   - Khi Người vận hành gọi `bay:learn` (hoặc `/bay:learn`, hoặc yêu cầu nạp kiến thức từ hội thoại khác `@[conversation:...]`, tài liệu SOP, hay tài nguyên vận hành), Agent **tuyệt đối không dùng `/learn` mặc định để ghi vào `AGENTS.md`**.
+   - Phải đọc và thực thi theo quy trình 5 bước của skill `bay:learn` (`skills/bay-learn/SKILL.md`): Giải mã nguồn $\rightarrow$ Định tuyến vào đúng 5 tầng nhận thức (`MEMORY.md`, `.agents/knowledge/*.md`, `data.db` + `STATE.md`, `CHARACTER.md`, `SOUL.md`) $\rightarrow$ Khử trùng lặp $\rightarrow$ Liên kết vào vòng lặp đang mở $\rightarrow$ Ghi tín hiệu kiểm toán.
 
 ---
 

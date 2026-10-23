@@ -27,6 +27,10 @@ Hệ điều hành AI Agent tự chủ thế hệ mới, vận hành 24/7 trực
    - Luồng hội thoại chính giữ lịch `/schedule` siêu nhẹ.
    - Các tác vụ nặng được ủy quyền cho `autonomous-worker` subagent chạy ngầm song song.
 
+6. **Giao Thức Nạp Tri Thức & Tài Nguyên Tự Chủ (`bay:learn`)**:
+   - Thay thế `/learn` mặc định để bảo vệ `AGENTS.md` không bị phình to.
+   - Tự động giải mã tri thức từ chỉ đạo trực tiếp, cuộc hội thoại nháp (`@[conversation:...]`), tài liệu dài (SOP/Docs) hoặc kho tài nguyên, rồi phân loại chính xác vào 5 tầng (`MEMORY.md`, `.agents/knowledge/*.md`, `data.db` + `STATE.md`, `CHARACTER.md`, `SOUL.md`).
+
 ---
 
 ## 📁 CẤU TRÚC PLUGIN
@@ -41,6 +45,8 @@ bhit-autonomy-plugin/
 │   ├── autonomous-worker.md           # Worker Subagent thực thi tác vụ nặng
 │   └── cognitive-dreamer.md           # Dreamer Subagent chạy ca ngủ 3 pha
 └── skills/
+    ├── bay-learn/                     # Skill bay:learn nạp & định tuyến tri thức 5 tầng
+    │   └── SKILL.md
     └── bh-autonomous-agent/           # Skill hạt nhân điều phối
         ├── SKILL.md
         ├── scripts/
