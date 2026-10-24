@@ -1,394 +1,92 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BHIT Autonomy Engine</title>
   <script src="/preload.js"></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+            },
+            surface: {
+              DEFAULT: '#0b0f19',
+              card: 'rgba(30, 41, 59, 0.45)',
+              cardHover: 'rgba(30, 41, 59, 0.7)',
+              border: 'rgba(255, 255, 255, 0.08)',
+            }
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+            sans: ['IBM Plex Sans', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg-primary: var(--background, #0f172a);
-      --fg-primary: var(--foreground, #f1f5f9);
-      --card-bg: rgba(148, 163, 184, 0.08);
-      --card-border: rgba(148, 163, 184, 0.18);
-      --accent: #3b82f6;
-      --accent-hover: #2563eb;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --muted: #94a3b8;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
     body {
-      margin: 0;
-      padding: 14px;
-      background: var(--bg-primary);
-      color: var(--fg-primary);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 13px;
-      line-height: 1.45;
+      background-color: var(--background, #0b0f19);
+      color: var(--foreground, #f8fafc);
+      font-family: 'IBM Plex Sans', -apple-system, sans-serif;
     }
-
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--card-border);
-      margin-bottom: 12px;
-      flex-wrap: wrap;
+    @keyframes pulse-ring {
+      0% { transform: scale(0.6); opacity: 0.9; }
+      100% { transform: scale(2.2); opacity: 0; }
     }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .brand-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 7px;
-      background: linear-gradient(135deg, #2563eb, #7c3aed);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-weight: 700;
-      font-size: 15px;
-      flex-shrink: 0;
-    }
-
-    .brand-title {
-      font-weight: 700;
-      font-size: 14px;
-    }
-
-    .brand-sub {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .daemon-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 9px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-      background: rgba(16, 185, 129, 0.14);
-      color: #10b981;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .pulse-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #10b981;
-      box-shadow: 0 0 8px #10b981;
-    }
-
-    .toolbar {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-
-    select, input, textarea {
-      background: var(--card-bg);
-      color: var(--fg-primary);
-      border: 1px solid var(--card-border);
-      border-radius: 6px;
-      padding: 6px 9px;
-      font-size: 12px;
-      font-family: inherit;
-    }
-
-    select {
-      flex: 1;
-      min-width: 170px;
-    }
-
-    button {
-      cursor: pointer;
-      border: 1px solid transparent;
-      border-radius: 6px;
-      padding: 6px 10px;
-      font-size: 12px;
-      font-weight: 600;
-      font-family: inherit;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: opacity 0.15s, transform 0.1s;
-    }
-
-    button:hover {
-      opacity: 0.92;
-    }
-
-    button:active {
-      transform: scale(0.98);
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .btn-success {
-      background: var(--success);
-      color: #fff;
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: #fff;
-    }
-
-    .btn-ghost {
-      background: var(--card-bg);
-      color: var(--fg-primary);
-      border-color: var(--card-border);
-    }
-
-    .btn-sm {
-      padding: 3px 8px;
-      font-size: 11px;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 4px;
-      border-bottom: 1px solid var(--card-border);
-      margin-bottom: 12px;
-      overflow-x: auto;
-    }
-
-    .tab {
-      background: transparent;
-      color: var(--muted);
-      border: none;
-      border-bottom: 2px solid transparent;
-      border-radius: 0;
-      padding: 7px 10px;
-      font-size: 12px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    .tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 1px 6px;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: 700;
-    }
-
-    .badge-overdue {
-      background: rgba(239, 68, 68, 0.18);
-      color: #ef4444;
-    }
-
-    .badge-duesoon {
-      background: rgba(245, 158, 11, 0.18);
-      color: #f59e0b;
-    }
-
-    .badge-upcoming {
-      background: rgba(59, 130, 246, 0.16);
-      color: #60a5fa;
-    }
-
-    .badge-done {
-      background: rgba(16, 185, 129, 0.16);
-      color: #10b981;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 11px;
-      margin-bottom: 10px;
-    }
-
-    .card-title {
-      font-weight: 700;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      color: var(--muted);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .loop-item {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--card-border);
-    }
-
-    .loop-item:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-
-    .loop-left {
-      display: flex;
-      align-items: flex-start;
-      gap: 7px;
-      flex: 1;
-    }
-
-    .loop-time {
-      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 11px;
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    .done-text {
-      text-decoration: line-through;
-      opacity: 0.6;
-    }
-
-    .stat-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-      gap: 7px;
-    }
-
-    .stat-box {
-      background: rgba(148, 163, 184, 0.06);
-      border: 1px solid var(--card-border);
-      border-radius: 6px;
-      padding: 7px 9px;
-    }
-
-    .stat-label {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .stat-val {
-      font-size: 15px;
-      font-weight: 700;
-      margin-top: 2px;
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 14px;
-      right: 14px;
-      background: #1e293b;
-      color: #f8fafc;
-      border: 1px solid var(--accent);
-      border-radius: 8px;
-      padding: 9px 13px;
-      font-size: 12px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-      display: none;
-      z-index: 999;
-    }
-
-    .form-row {
-      display: flex;
-      gap: 6px;
-      margin-top: 8px;
-      flex-wrap: wrap;
-    }
-
-    .mono {
-      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 11px;
+    .animate-pulse-ring {
+      animation: pulse-ring 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
     }
   </style>
 </head>
-<body>
-  <div class="header">
-    <div class="brand">
-      <div class="brand-icon">⚡</div>
-      <div>
-        <div class="brand-title">BHIT Autonomy Engine</div>
-        <div class="brand-sub" id="daemonSub">Persistent Sidecar Scheduler & Cognition UI</div>
-      </div>
-    </div>
-    <div class="daemon-pill" id="daemonBadge">
-      <span class="pulse-dot"></span>
-      <span id="daemonStatusText">Auto-Resurrect ON</span>
-    </div>
-  </div>
+<body class="p-3.5 antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
+  <div id="app"></div>
 
-  <div class="toolbar">
-    <select id="projectSelect" onchange="onSelectProject()"></select>
-    <button class="btn-primary" onclick="reconcileNow()" title="Kiểm tra TaskId thực tế, khôi phục lịch trình bị tắt và chạy bù tác vụ quá hạn">
-      ⚡ Đồng bộ & Đánh thức
-    </button>
-    <button class="btn-ghost" onclick="loadDashboard()" title="Làm mới dữ liệu">🔄</button>
-  </div>
+  <!-- Preact & HTM via ESM -->
+  <script type="module">
+    import { h, render } from 'https://esm.sh/preact@10.26.2';
+    import { useState, useEffect, useRef } from 'https://esm.sh/preact@10.26.2/hooks';
+    import htm from 'https://esm.sh/htm@3.1.1';
 
-  <div id="projectMetaBar" class="card" style="padding: 8px 11px; display: none;">
-    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
-      <div style="font-size: 11px;">
-        <span style="color: var(--muted);">Phiên gắn kết:</span>
-        <span class="mono" id="boundConvId">Chưa có</span>
-        <button class="btn-ghost btn-sm" id="openConvBtn" style="margin-left: 4px; display: none;" onclick="openBoundConversation()">Mở Chat ↗</button>
-      </div>
-      <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; cursor: pointer;">
-        <input type="checkbox" id="autoWakeToggle" onchange="toggleAutoWake(this.checked)" />
-        <span>Tự động đánh thức khi đến hạn / mở lại App</span>
-      </label>
-    </div>
-  </div>
+    const html = htm.bind(h);
 
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('state')" id="tab-state">⚡ Bàn làm việc</button>
-    <button class="tab" onclick="switchTab('schedule')" id="tab-schedule">⏰ Lịch trình <span id="schedCountBadge" class="badge badge-upcoming">0</span></button>
-    <button class="tab" onclick="switchTab('inbox')" id="tab-inbox">📬 INBOX <span id="inboxCountBadge" class="badge badge-duesoon">0</span></button>
-    <button class="tab" onclick="switchTab('dreams')" id="tab-dreams">🌙 Ký ức & Tín hiệu</button>
-  </div>
+    // Lucide SVG Icons (Zero Emoji)
+    const Icons = {
+      Zap: () => html`<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`,
+      Activity: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`,
+      Refresh: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>`,
+      Reload: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5"></path></svg>`,
+      ExternalLink: () => html`<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`,
+      Check: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+      Clock: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
+      AlertCircle: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`,
+      Inbox: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>`,
+      Moon: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`,
+      Database: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>`,
+      Target: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`,
+      Play: () => html`<svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
+      Trash: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
+      X: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`,
+      Sparkles: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
+      Shield: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`,
+      ChevronDown: () => html`<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>`
+    };
 
-  <div id="view-state"></div>
-  <div id="view-schedule" style="display: none;"></div>
-  <div id="view-inbox" style="display: none;"></div>
-  <div id="view-dreams" style="display: none;"></div>
-
-  <div id="toast" class="toast"></div>
-
-  <script>
-    let currentTab = 'state';
-    let currentWorkspacePath = '';
-    let dashboardData = null;
-    let hostWorkspaceUris = [];
-
-    function showToast(msg) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.style.display = 'block';
-      setTimeout(() => { el.style.display = 'none'; }, 3500);
-    }
-
-    async function apiCall(path, body = {}) {
+    // API Bridge
+    async function apiRequest(path, body = {}) {
       const fetchFn = window.sidecar?.fetch || fetch;
       const res = await fetchFn(path, {
         method: 'POST',
@@ -396,472 +94,693 @@
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || 'Request failed');
-      }
+      if (!res.ok || data.error) throw new Error(data.error || 'Request failed');
       return data;
     }
 
-    function switchTab(tab) {
-      currentTab = tab;
-      for (const t of ['state', 'schedule', 'inbox', 'dreams']) {
-        document.getElementById('tab-' + t).classList.toggle('active', t === tab);
-        document.getElementById('view-' + t).style.display = t === tab ? 'block' : 'none';
-      }
-      renderViews();
-    }
+    function App() {
+      const [activeTab, setActiveTab] = useState('state');
+      const [data, setData] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [toast, setToast] = useState(null);
+      const [selectedPath, setSelectedPath] = useState('');
+      const [workspaceUris, setWorkspaceUris] = useState([]);
+      const [newSched, setNewSched] = useState({ type: 'TIMER', time: '', desc: '' });
+      const [inboxNotes, setInboxNotes] = useState({});
 
-    function onSelectProject() {
-      const sel = document.getElementById('projectSelect');
-      currentWorkspacePath = sel.value;
-      loadDashboard();
-    }
+      const showToast = (msg, type = 'info') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3600);
+      };
 
-    function openBoundConversation() {
-      const convId = dashboardData?.activeProject?.active_conversation_id;
-      if (convId && window.sidecar?.ui?.toggleConversation) {
-        window.sidecar.ui.toggleConversation(convId);
-      }
-    }
-
-    async function toggleAutoWake(checked) {
-      if (!currentWorkspacePath) return;
-      try {
-        await apiCall('/api/toggle-auto-wake', {
-          workspacePath: currentWorkspacePath,
-          autoWake: checked,
-        });
-        showToast(checked ? 'Đã bật Tự động đánh thức 24/7' : 'Đã tạm dừng Tự động đánh thức');
-        loadDashboard();
-      } catch (err) {
-        showToast('Lỗi: ' + err.message);
-      }
-    }
-
-    async function reconcileNow() {
-      if (!currentWorkspacePath) return;
-      try {
-        showToast('Đang gửi lệnh Đồng bộ & Đánh thức Agent...');
-        const res = await apiCall('/api/wake-now', {
-          workspacePath: currentWorkspacePath,
-          mode: 'RECONCILE',
-        });
-        showToast('⚡ Đã đánh thức Agent thành công!');
-        loadDashboard();
-      } catch (err) {
-        showToast('Lỗi: ' + err.message);
-      }
-    }
-
-    async function runOpenLoopNow(timeStr, desc) {
-      try {
-        showToast('Đang giao Open Loop cho Agent...');
-        await apiCall('/api/wake-now', {
-          workspacePath: currentWorkspacePath,
-          mode: 'OPEN_LOOP',
-          loopTime: timeStr,
-          loopDescription: desc,
-        });
-        showToast('▶ Đã kích hoạt thực thi Open Loop!');
-        loadDashboard();
-      } catch (err) {
-        showToast('Lỗi: ' + err.message);
-      }
-    }
-
-    async function toggleOpenLoopDone(timeStr, done) {
-      try {
-        await apiCall('/api/toggle-open-loop', {
-          workspacePath: currentWorkspacePath,
-          timeStr,
-          done,
-        });
-        loadDashboard();
-      } catch (err) {
-        showToast('Lỗi: ' + err.message);
-      }
-    }
-
-    async function decideInbox(inboxId, decision) {
-      const noteEl = document.getElementById('note-' + inboxId);
-      const userNote = noteEl ? noteEl.value.trim() : '';
-      try {
-        showToast(`Đang cập nhật ${inboxId} -> ${decision}...`);
-        await apiCall('/api/inbox-decision', {
-          workspacePath: currentWorkspacePath,
-          inboxId,
-          decision,
-          userNote,
-          wakeAgent: true,
-        });
-        showToast(`✅ Đã ${decision} ${inboxId} & đánh thức Agent!`);
-        loadDashboard();
-      } catch (err) {
-        showToast('Lỗi: ' + err.message);
-      }
-    }
-
-    async function addCustomSchedule() {
-      const type = document.getElementById('newSchedType').value;
-      const cronOrTime = document.getElementById('newSchedTime').value;
-      const taskDescription = document.getElementById('newSchedDesc').value;
-      try {
-        await apiCall('/api/add-schedule', {
-          workspacePath: currentWorkspacePath,
-          scheduleType: type,
-          cronOrTime,
-          taskDescription,
-        });
-        showToast('✅ Đã lưu lịch trình cố định vào SQLite Daemon!');
-        loadDashboard();
-      } catch (err) {
-        showToast('Lỗi: ' + err.message);
-      }
-    }
-
-    async function deleteCustomSchedule(id) {
-      try {
-        await apiCall('/api/delete-schedule', { id });
-        showToast('Đã xóa lịch trình');
-        loadDashboard();
-      } catch (err) {
-        showToast('Lỗi: ' + err.message);
-      }
-    }
-
-    async function triggerDreamerNow() {
-      try {
-        showToast('🌙 Đang kích hoạt chu trình hợp nhất ký ức 3 pha...');
-        await apiCall('/api/wake-now', {
-          workspacePath: currentWorkspacePath,
-          mode: 'DREAMER',
-        });
-        showToast('🌙 Đã gọi Subagent cognitive-dreamer!');
-        loadDashboard();
-      } catch (err) {
-        showToast('Lỗi: ' + err.message);
-      }
-    }
-
-    function escapeHtml(s) {
-      return String(s || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    function renderViews() {
-      if (!dashboardData || !dashboardData.activeProject) {
-        document.getElementById('view-state').innerHTML = `
-          <div class="card">
-            <div class="card-title">Chưa phát hiện dự án tự chủ</div>
-            <p style="color: var(--muted); margin: 0;">
-              Không tìm thấy dự án nào có cấu trúc <code>.agents/cognition/STATE.md</code>.
-              Hãy yêu cầu Agent khởi tạo hệ thống tự chủ bằng skill <code>bh-autonomous-agent</code>.
-            </p>
-          </div>`;
-        return;
-      }
-
-      const proj = dashboardData.activeProject;
-      const cog = dashboardData.cognition;
-
-      // Update header & meta bar
-      document.getElementById('daemonSub').textContent =
-        `Heartbeat: ${dashboardData.daemon.serverTime} • Tick #${dashboardData.daemon.tickCount}`;
-      document.getElementById('projectMetaBar').style.display = 'block';
-      document.getElementById('boundConvId').textContent =
-        proj.active_conversation_id ? proj.active_conversation_id.slice(0, 13) + '...' : 'Tự tạo phiên mới';
-      document.getElementById('openConvBtn').style.display = proj.active_conversation_id ? 'inline-flex' : 'none';
-      document.getElementById('autoWakeToggle').checked = Boolean(proj.auto_wake);
-
-      const pendingInbox = cog.inboxItems.filter((i) => i.status === 'PENDING').length;
-      document.getElementById('inboxCountBadge').textContent = pendingInbox;
-      document.getElementById('schedCountBadge').textContent =
-        cog.schedules.length + cog.customSchedules.length;
-
-      // 1. Render STATE tab
-      const loopsHtml = cog.openLoops.length
-        ? cog.openLoops
-            .map((l) => {
-              let badge = '<span class="badge badge-upcoming">Sắp tới</span>';
-              if (l.done) badge = '<span class="badge badge-done">Hoàn thành</span>';
-              else if (l.status === 'OVERDUE') badge = `<span class="badge badge-overdue">Quá hạn (${Math.abs(l.diffMinutes)}p)</span>`;
-              else if (l.status === 'DUE_SOON') badge = `<span class="badge badge-duesoon">Còn ${l.diffMinutes}p</span>`;
-
-              return `
-                <div class="loop-item">
-                  <div class="loop-left">
-                    <input type="checkbox" ${l.done ? 'checked' : ''} onchange="toggleOpenLoopDone('${escapeHtml(l.timeStr)}', this.checked)" />
-                    <div>
-                      <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                        <span class="loop-time">${escapeHtml(l.timeStr)}</span>
-                        ${badge}
-                      </div>
-                      <div class="${l.done ? 'done-text' : ''}" style="margin-top:3px;">${escapeHtml(l.description)}</div>
-                    </div>
-                  </div>
-                  ${
-                    !l.done
-                      ? `<button class="btn-ghost btn-sm" onclick="runOpenLoopNow('${escapeHtml(l.timeStr)}', '${escapeHtml(l.description.replace(/'/g, "\\'"))}')">▶ Chạy</button>`
-                      : ''
-                  }
-                </div>`;
-            })
-            .join('')
-        : '<div style="color:var(--muted);">Không có Open Loop nào.</div>';
-
-      const metricsHtml = cog.goalProgress.metrics.length
-        ? `<ul style="margin:6px 0; padding-left:18px;">${cog.goalProgress.metrics.map((m) => `<li>${escapeHtml(m)}</li>`).join('')}</ul>`
-        : '';
-
-      const dbStatsHtml = cog.dbStats.length
-        ? `<div class="card">
-            <div class="card-title"><span>🗄️ Hạ tầng SQLite (data.db)</span></div>
-            <div class="stat-grid">
-              ${cog.dbStats
-                .map(
-                  (s) => `
-                <div class="stat-box">
-                  <div class="stat-label">${escapeHtml(s.table)}</div>
-                  <div class="stat-val">${s.count}</div>
-                </div>`
-                )
-                .join('')}
-            </div>
-          </div>`
-        : '';
-
-      document.getElementById('view-state').innerHTML = `
-        <div class="card">
-          <div class="card-title">
-            <span>🎯 Tiến độ Mục tiêu (Goal Progress)</span>
-            <span class="mono" style="color:var(--accent);">${escapeHtml(cog.goalProgress.cycle)}</span>
-          </div>
-          ${metricsHtml}
-          ${
-            cog.goalProgress.goalGap
-              ? `<div style="margin-top:6px; padding:7px; border-radius:6px; background:rgba(59,130,246,0.1); font-size:12px;">
-                  <strong>Goal Gap:</strong> ${escapeHtml(cog.goalProgress.goalGap)}
-                 </div>`
-              : ''
+      const loadData = async (targetPath = selectedPath) => {
+        try {
+          const res = await apiRequest('/api/dashboard', {
+            workspacePath: targetPath,
+            workspaceUris,
+          });
+          setData(res);
+          if (res.activeProject) {
+            setSelectedPath(res.activeProject.workspace_path);
           }
-        </div>
-
-        <div class="card">
-          <div class="card-title">
-            <span>🔄 Các Vòng Lặp Đang Mở (Open Loops)</span>
-            <span style="font-size:11px;">${cog.openLoops.filter((x) => !x.done).length} đang mở</span>
-          </div>
-          ${loopsHtml}
-        </div>
-
-        ${dbStatsHtml}
-      `;
-
-      // 2. Render SCHEDULE tab
-      const stateSchedHtml = cog.schedules.length
-        ? cog.schedules
-            .map((s) => {
-              const badge =
-                s.status === 'OVERDUE'
-                  ? '<span class="badge badge-overdue">Cần chạy bù / Reconcile</span>'
-                  : '<span class="badge badge-done">Đang theo dõi bởi Sidecar</span>';
-              return `
-                <div class="loop-item">
-                  <div>
-                    <div style="display:flex; align-items:center; gap:6px;">
-                      <span class="badge badge-upcoming">${escapeHtml(s.type)}</span>
-                      <span class="loop-time">${escapeHtml(s.expression)}</span>
-                      <span class="mono" style="color:var(--muted);">(${escapeHtml(s.taskId)})</span>
-                      ${badge}
-                    </div>
-                    <div style="margin-top:3px;">${escapeHtml(s.task)}</div>
-                  </div>
-                </div>`;
-            })
-            .join('')
-        : '<div style="color:var(--muted);">Chưa có lịch trình trong mục 4 của STATE.md</div>';
-
-      const customSchedHtml = cog.customSchedules.length
-        ? cog.customSchedules
-            .map(
-              (cs) => `
-              <div class="loop-item">
-                <div>
-                  <div style="display:flex; align-items:center; gap:6px;">
-                    <span class="badge badge-upcoming">${escapeHtml(cs.schedule_type)}</span>
-                    <span class="loop-time">${escapeHtml(cs.cron_or_time)}</span>
-                    <span class="badge ${cs.enabled ? 'badge-done' : 'badge-overdue'}">${cs.enabled ? 'Active' : 'Done'}</span>
-                  </div>
-                  <div style="margin-top:3px;">${escapeHtml(cs.task_description)}</div>
-                </div>
-                <button class="btn-ghost btn-sm" onclick="deleteCustomSchedule(${cs.id})">🗑️</button>
-              </div>`
-            )
-            .join('')
-        : '<div style="color:var(--muted); font-size:12px;">Chưa có lịch trình bổ sung.</div>';
-
-      const logsHtml = cog.logs.length
-        ? cog.logs
-            .map(
-              (lg) => `
-              <div class="loop-item" style="font-size:11px;">
-                <div>
-                  <div>
-                    <span class="badge ${lg.status === 'SUCCESS' ? 'badge-done' : 'badge-overdue'}">${escapeHtml(lg.status)}</span>
-                    <strong style="margin-left:4px;">${escapeHtml(lg.task_type)}</strong>
-                    <span class="mono" style="color:var(--muted); margin-left:4px;">${escapeHtml(lg.triggered_at)}</span>
-                  </div>
-                  <div style="color:var(--muted); margin-top:2px;">Mốc lịch: ${escapeHtml(lg.scheduled_for)}</div>
-                </div>
-              </div>`
-            )
-            .join('')
-        : '<div style="color:var(--muted); font-size:12px;">Chưa có lịch sử kích hoạt tự động.</div>';
-
-      document.getElementById('view-schedule').innerHTML = `
-        <div class="card">
-          <div class="card-title">
-            <span>🛡️ Cơ chế Bảo vệ Lịch trình Bất tử (Sidecar Daemon)</span>
-          </div>
-          <p style="margin:0 0 8px 0; font-size:12px; color:var(--muted);">
-            Sidecar này chạy với <code>restart_policy: "always"</code>. Ngay cả khi Antigravity bị tắt đột ngột và bật lại, Sidecar tự động đối chiếu các mốc thời gian trong <code>STATE.md</code> và SQLite để đánh thức Agent chạy bù mà không bị mất việc!
-          </p>
-          ${stateSchedHtml}
-        </div>
-
-        <div class="card">
-          <div class="card-title"><span>➕ Lịch trình Cố định (SQLite Persistent Schedules)</span></div>
-          ${customSchedHtml}
-          <div class="form-row">
-            <select id="newSchedType" style="flex:0 0 95px;">
-              <option value="CRON">CRON</option>
-              <option value="TIMER">TIMER</option>
-            </select>
-            <input id="newSchedTime" placeholder="VD: 0 */2 * * * hoặc 2026-10-24 14:00" style="flex:1;" />
-          </div>
-          <div class="form-row">
-            <input id="newSchedDesc" placeholder="Nhiệm vụ khi thức dậy..." style="flex:1;" />
-            <button class="btn-primary" onclick="addCustomSchedule()">Lưu lịch</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title"><span>📜 Nhật ký Đánh thức Tự động (Wakeup Logs)</span></div>
-          ${logsHtml}
-        </div>
-      `;
-
-      // 3. Render INBOX tab
-      const inboxHtml = cog.inboxItems.length
-        ? cog.inboxItems
-            .map((item) => {
-              const isPending = item.status === 'PENDING';
-              const badgeClass =
-                item.status === 'APPROVED'
-                  ? 'badge-done'
-                  : item.status === 'REJECTED'
-                  ? 'badge-overdue'
-                  : 'badge-duesoon';
-              return `
-                <div class="card">
-                  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-                    <div>
-                      <span class="mono" style="color:var(--accent); font-weight:700;">${escapeHtml(item.id)}</span>
-                      <div style="font-weight:700; margin-top:2px;">${escapeHtml(item.title)}</div>
-                    </div>
-                    <span class="badge ${badgeClass}">${escapeHtml(item.status)}</span>
-                  </div>
-                  ${item.reason ? `<div style="margin-top:6px; font-size:12px;"><strong>Lý do:</strong> ${escapeHtml(item.reason)}</div>` : ''}
-                  ${item.goal ? `<div style="margin-top:4px; font-size:12px; color:var(--muted);"><strong>Mục tiêu:</strong> ${escapeHtml(item.goal)}</div>` : ''}
-                  ${
-                    isPending
-                      ? `<div class="form-row" style="margin-top:10px;">
-                          <input id="note-${escapeHtml(item.id)}" placeholder="Chỉ đạo / Ghi chú phê duyệt (tùy chọn)..." style="flex:1;" />
-                          <button class="btn-success btn-sm" onclick="decideInbox('${escapeHtml(item.id)}', 'APPROVED')">✅ Duyệt & Thực thi</button>
-                          <button class="btn-danger btn-sm" onclick="decideInbox('${escapeHtml(item.id)}', 'REJECTED')">❌ Từ chối</button>
-                         </div>`
-                      : ''
-                  }
-                </div>`;
-            })
-            .join('')
-        : '<div class="card" style="color:var(--muted);">Không có đề xuất nào trong INBOX.md</div>';
-
-      document.getElementById('view-inbox').innerHTML = inboxHtml;
-
-      // 4. Render DREAMS & SIGNALS tab
-      const signalsHtml = cog.signals.length
-        ? cog.signals
-            .map(
-              (sig) => `
-              <div class="loop-item">
-                <div>
-                  <span class="loop-time">${escapeHtml(sig.time)}</span>
-                  <span class="badge badge-upcoming" style="margin-left:4px;">${escapeHtml(sig.tag)}</span>
-                  <div style="margin-top:3px;">${escapeHtml(sig.text)}</div>
-                </div>
-              </div>`
-            )
-            .join('')
-        : '<div style="color:var(--muted);">Chưa có tín hiệu mới trong ngày.</div>';
-
-      document.getElementById('view-dreams').innerHTML = `
-        <div class="card">
-          <div class="card-title">
-            <span>🌙 Hợp nhất Ký ức 3 Pha (Cognitive Dreamer)</span>
-            <button class="btn-primary btn-sm" onclick="triggerDreamerNow()">🌙 Chạy Dreamer ngay</button>
-          </div>
-          <p style="margin:0; font-size:12px; color:var(--muted);">
-            Thu gom <code>Daily Signals</code> từ <code>STATE.md</code> (Light Sleep) ➔ Đối chiếu giả thuyết trong <code>DREAMS.md</code> (REM Sleep) ➔ Thăng cấp quy tắc vào <code>MEMORY.md</code> (Deep Sleep).
-          </p>
-        </div>
-        <div class="card">
-          <div class="card-title"><span>📡 Tín hiệu trong ngày (Daily Signals)</span></div>
-          ${signalsHtml}
-        </div>
-      `;
-    }
-
-    async function loadDashboard() {
-      try {
-        const data = await apiCall('/api/dashboard', {
-          workspacePath: currentWorkspacePath,
-          workspaceUris: hostWorkspaceUris,
-        });
-        dashboardData = data;
-
-        const sel = document.getElementById('projectSelect');
-        sel.innerHTML = '';
-        for (const p of data.projects) {
-          const opt = document.createElement('option');
-          opt.value = p.workspace_path;
-          opt.textContent = `${p.name} (${p.workspace_path})`;
-          if (data.activeProject && p.workspace_path === data.activeProject.workspace_path) {
-            opt.selected = true;
-            currentWorkspacePath = p.workspace_path;
-          }
-          sel.appendChild(opt);
+        } catch (err) {
+          showToast(err.message, 'error');
+        } finally {
+          setLoading(false);
         }
+      };
 
-        renderViews();
-      } catch (err) {
-        console.error('Failed to load dashboard:', err);
-      }
+      useEffect(() => {
+        loadData();
+        const interval = setInterval(() => loadData(), 15000);
+        if (window.sidecar?.onWorkspaceChange) {
+          window.sidecar.onWorkspaceChange((uris) => {
+            setWorkspaceUris(uris || []);
+            loadData();
+          });
+        }
+        return () => clearInterval(interval);
+      }, [selectedPath]);
+
+      const handleSelectProject = (e) => {
+        const path = e.target.value;
+        setSelectedPath(path);
+        loadData(path);
+      };
+
+      const handleReconcile = async () => {
+        if (!selectedPath) return;
+        showToast('Đang gửi lệnh Đồng bộ & Đánh thức Agent...', 'info');
+        try {
+          await apiRequest('/api/wake-now', { workspacePath: selectedPath, mode: 'RECONCILE' });
+          showToast('Đã phát tín hiệu Đồng bộ & Đánh thức Agent!', 'success');
+          loadData();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      };
+
+      const handleToggleAutoWake = async (checked) => {
+        if (!selectedPath) return;
+        try {
+          await apiRequest('/api/toggle-auto-wake', { workspacePath: selectedPath, autoWake: checked });
+          showToast(checked ? 'Đã bật bảo vệ tự động 24/7' : 'Đã tạm dừng tự động đánh thức', 'info');
+          loadData();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      };
+
+      const handleRunOpenLoop = async (timeStr, desc) => {
+        showToast('Đang giao Open Loop cho Agent...', 'info');
+        try {
+          await apiRequest('/api/wake-now', {
+            workspacePath: selectedPath,
+            mode: 'OPEN_LOOP',
+            loopTime: timeStr,
+            loopDescription: desc,
+          });
+          showToast('Đã kích hoạt Agent thực thi!', 'success');
+          loadData();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      };
+
+      const handleToggleOpenLoop = async (timeStr, done) => {
+        try {
+          await apiRequest('/api/toggle-open-loop', { workspacePath: selectedPath, timeStr, done });
+          loadData();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      };
+
+      const handleInboxDecision = async (inboxId, decision) => {
+        const userNote = inboxNotes[inboxId] || '';
+        showToast(`Đang cập nhật ${inboxId} -> ${decision}...`, 'info');
+        try {
+          await apiRequest('/api/inbox-decision', {
+            workspacePath: selectedPath,
+            inboxId,
+            decision,
+            userNote,
+            wakeAgent: true,
+          });
+          showToast(`Đã ${decision} ${inboxId} & đánh thức Agent!`, 'success');
+          loadData();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      };
+
+      const handleAddSchedule = async () => {
+        if (!newSched.time || !newSched.desc) {
+          showToast('Vui lòng nhập mốc thời gian và nội dung.', 'error');
+          return;
+        }
+        try {
+          await apiRequest('/api/add-schedule', {
+            workspacePath: selectedPath,
+            scheduleType: newSched.type,
+            cronOrTime: newSched.time,
+            taskDescription: newSched.desc,
+          });
+          setNewSched({ type: 'TIMER', time: '', desc: '' });
+          showToast('Đã lưu lịch trình cố định vào SQLite!', 'success');
+          loadData();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      };
+
+      const handleDeleteSchedule = async (id) => {
+        try {
+          await apiRequest('/api/delete-schedule', { id });
+          showToast('Đã xóa lịch trình.', 'info');
+          loadData();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      };
+
+      const handleTriggerDreamer = async () => {
+        showToast('Đang kích hoạt chu trình hợp nhất ký ức...', 'info');
+        try {
+          await apiRequest('/api/wake-now', { workspacePath: selectedPath, mode: 'DREAMER' });
+          showToast('Đã gọi Subagent cognitive-dreamer!', 'success');
+          loadData();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      };
+
+      const handleOpenConversation = () => {
+        const convId = data?.activeProject?.active_conversation_id;
+        if (convId && window.sidecar?.ui?.toggleConversation) {
+          window.sidecar.ui.toggleConversation(convId);
+        }
+      };
+
+      const proj = data?.activeProject;
+      const cog = data?.cognition;
+      const pendingInboxCount = cog?.inboxItems?.filter(i => i.status === 'PENDING').length || 0;
+      const totalSchedCount = (cog?.schedules?.length || 0) + (cog?.customSchedules?.length || 0);
+
+      return html`
+        <div class="flex flex-col gap-3 max-w-full">
+          <!-- Header Bar -->
+          <header class="flex items-center justify-between pb-3 border-b border-white/10 gap-2 flex-wrap">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                <${Icons.Zap} />
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5 font-bold text-sm tracking-tight">
+                  <span>BHIT Autonomy Engine</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-400 font-semibold border border-indigo-500/30">PREACT</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-400">
+                  <${Icons.Activity} />
+                  <span>${data ? `${data.daemon.serverTime} • #${data.daemon.tickCount}` : 'Connecting...'}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+              <div class="relative flex h-2 w-2">
+                <span class="animate-pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </div>
+              <span>Auto-Resurrect Active</span>
+            </div>
+          </header>
+
+          <!-- Workspace Selector & Quick Actions -->
+          <div class="flex items-center gap-2">
+            <div class="relative flex-1">
+              <select
+                value=${selectedPath}
+                onChange=${handleSelectProject}
+                class="w-full bg-slate-900/60 text-slate-200 border border-white/10 rounded-lg px-3 py-1.5 pr-8 text-xs font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer transition-all"
+              >
+                ${data?.projects?.map(p => html`
+                  <option key=${p.workspace_path} value=${p.workspace_path}>
+                    ${p.name} (${p.workspace_path})
+                  </option>
+                `)}
+              </select>
+              <div class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <${Icons.ChevronDown} />
+              </div>
+            </div>
+
+            <button
+              onClick=${handleReconcile}
+              title="Khôi phục lịch trình bị hủy sau khi tắt Antigravity và chạy bù tác vụ quá hạn"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-indigo-600/20 hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+            >
+              <${Icons.Refresh} />
+              <span>Đồng bộ</span>
+            </button>
+
+            <button
+              onClick=${() => loadData()}
+              title="Làm mới trạng thái"
+              class="p-1.5 rounded-lg text-slate-300 bg-slate-800/60 border border-white/10 hover:bg-slate-700/60 active:scale-95 transition-all cursor-pointer"
+            >
+              <${Icons.Reload} />
+            </button>
+          </div>
+
+          <!-- Project Meta & 24/7 Switch -->
+          ${proj && html`
+            <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-900/40 border border-white/10 text-xs text-slate-300">
+              <div class="flex items-center gap-2">
+                <span class="text-slate-400">Phiên:</span>
+                <span class="font-mono text-indigo-400 font-medium">
+                  ${proj.active_conversation_id ? proj.active_conversation_id.slice(0, 13) + '...' : 'Tự tạo mới'}
+                </span>
+                ${proj.active_conversation_id && html`
+                  <button
+                    onClick=${handleOpenConversation}
+                    class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] cursor-pointer transition-all"
+                  >
+                    <${Icons.ExternalLink} />
+                    <span>Mở Chat</span>
+                  </button>
+                `}
+              </div>
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked=${Boolean(proj.auto_wake)}
+                  onChange=${(e) => handleToggleAutoWake(e.target.checked)}
+                  class="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-0 cursor-pointer h-3.5 w-3.5"
+                />
+                <span class="text-[11px]">Đánh thức 24/7</span>
+              </label>
+            </div>
+          `}
+
+          <!-- Segmented Navigation Tabs -->
+          <nav class="flex p-1 gap-1 bg-slate-950/60 border border-white/10 rounded-lg text-xs font-semibold">
+            <button
+              onClick=${() => setActiveTab('state')}
+              class="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-all cursor-pointer ${activeTab === 'state' ? 'bg-white/10 text-white shadow' : 'text-slate-400 hover:text-slate-200'}"
+            >
+              <${Icons.Zap} />
+              <span>Bàn làm việc</span>
+            </button>
+
+            <button
+              onClick=${() => setActiveTab('schedule')}
+              class="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-all cursor-pointer ${activeTab === 'schedule' ? 'bg-white/10 text-white shadow' : 'text-slate-400 hover:text-slate-200'}"
+            >
+              <${Icons.Clock} />
+              <span>Lịch trình</span>
+              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold">${totalSchedCount}</span>
+            </button>
+
+            <button
+              onClick=${() => setActiveTab('inbox')}
+              class="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-all cursor-pointer ${activeTab === 'inbox' ? 'bg-white/10 text-white shadow' : 'text-slate-400 hover:text-slate-200'}"
+            >
+              <${Icons.Inbox} />
+              <span>INBOX</span>
+              <span class="px-1.5 py-0.2 rounded-full text-[10px] ${pendingInboxCount > 0 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse font-bold' : 'bg-slate-800 text-slate-400'}">${pendingInboxCount}</span>
+            </button>
+
+            <button
+              onClick=${() => setActiveTab('dreams')}
+              class="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-all cursor-pointer ${activeTab === 'dreams' ? 'bg-white/10 text-white shadow' : 'text-slate-400 hover:text-slate-200'}"
+            >
+              <${Icons.Moon} />
+              <span>Ký ức</span>
+            </button>
+          </nav>
+
+          <!-- Tab 1: STATE (Bàn làm việc) -->
+          ${activeTab === 'state' && html`
+            <div class="flex flex-col gap-3">
+              <!-- Goal Progress Card -->
+              <div class="p-3.5 rounded-xl bg-slate-900/40 border border-white/10 flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    <${Icons.Target} />
+                    <span>Tiến độ Mục tiêu (Goal Progress)</span>
+                  </div>
+                  <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 font-semibold border border-indigo-500/25">
+                    ${cog?.goalProgress?.cycle || 'Active Cycle'}
+                  </span>
+                </div>
+
+                <div class="flex flex-col gap-1 text-xs">
+                  ${cog?.goalProgress?.metrics?.map((m, idx) => html`
+                    <div key=${idx} class="flex items-baseline gap-2 text-slate-200">
+                      <span class="text-indigo-400 font-bold">•</span>
+                      <span>${m}</span>
+                    </div>
+                  `)}
+                </div>
+
+                ${cog?.goalProgress?.goalGap && html`
+                  <div class="mt-1 p-2.5 rounded-lg bg-indigo-500/10 border-l-2 border-indigo-500 text-xs">
+                    <span class="font-semibold text-indigo-300">Goal Gap: </span>
+                    <span class="text-slate-200">${cog.goalProgress.goalGap}</span>
+                  </div>
+                `}
+              </div>
+
+              <!-- Open Loops Card -->
+              <div class="p-3.5 rounded-xl bg-slate-900/40 border border-white/10 flex flex-col gap-2">
+                <div class="flex items-center justify-between pb-1 border-b border-white/5">
+                  <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    <${Icons.Activity} />
+                    <span>Các Vòng Lặp Đang Mở (Open Loops)</span>
+                  </div>
+                  <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-medium">
+                    ${cog?.openLoops?.filter(l => !l.done).length || 0} đang mở
+                  </span>
+                </div>
+
+                <div class="flex flex-col divide-y divide-white/5">
+                  ${cog?.openLoops?.map((loop, idx) => {
+                    let badgeClass = 'bg-indigo-500/15 text-indigo-300 border-indigo-500/25';
+                    let badgeLabel = 'Sắp tới';
+                    if (loop.done) {
+                      badgeClass = 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25';
+                      badgeLabel = 'Hoàn thành';
+                    } else if (loop.status === 'OVERDUE') {
+                      badgeClass = 'bg-rose-500/15 text-rose-300 border-rose-500/25 animate-pulse';
+                      badgeLabel = `Quá hạn (${Math.abs(loop.diffMinutes)}p)`;
+                    } else if (loop.status === 'DUE_SOON') {
+                      badgeClass = 'bg-amber-500/15 text-amber-300 border-amber-500/25';
+                      badgeLabel = `Còn ${loop.diffMinutes}p`;
+                    }
+
+                    return html`
+                      <div key=${idx} class="py-2.5 flex items-start justify-between gap-2.5">
+                        <div class="flex items-start gap-2.5 flex-1">
+                          <input
+                            type="checkbox"
+                            checked=${loop.done}
+                            onChange=${(e) => handleToggleOpenLoop(loop.timeStr, e.target.checked)}
+                            class="mt-0.5 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-0 cursor-pointer h-4 w-4"
+                          />
+                          <div class="flex flex-col gap-0.5">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                              <span class="font-mono text-xs font-semibold text-indigo-400">${loop.timeStr}</span>
+                              <span class="text-[10px] px-2 py-0.2 rounded-full border font-semibold ${badgeClass}">
+                                ${badgeLabel}
+                              </span>
+                            </div>
+                            <span class="text-xs ${loop.done ? 'line-through text-slate-500' : 'text-slate-200'}">
+                              ${loop.description}
+                            </span>
+                          </div>
+                        </div>
+
+                        ${!loop.done && html`
+                          <button
+                            onClick=${() => handleRunOpenLoop(loop.timeStr, loop.description)}
+                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 active:scale-95 transition-all cursor-pointer"
+                          >
+                            <${Icons.Play} />
+                            <span>Chạy</span>
+                          </button>
+                        `}
+                      </div>
+                    `;
+                  })}
+                  ${(!cog?.openLoops || cog.openLoops.length === 0) && html`
+                    <div class="text-center py-4 text-xs text-slate-400">Không có Open Loop nào.</div>
+                  `}
+                </div>
+              </div>
+
+              <!-- SQLite data.db Stats -->
+              ${cog?.dbStats && cog.dbStats.length > 0 && html`
+                <div class="p-3.5 rounded-xl bg-slate-900/40 border border-white/10 flex flex-col gap-2">
+                  <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    <${Icons.Database} />
+                    <span>Hạ tầng Dữ liệu SQLite (data.db)</span>
+                  </div>
+                  <div class="grid grid-cols-3 gap-2 pt-1">
+                    ${cog.dbStats.map(s => html`
+                      <div key=${s.table} class="p-2 rounded-lg bg-slate-800/40 border border-white/5 flex flex-col">
+                        <span class="font-mono text-[11px] text-slate-400 truncate" title=${s.table}>${s.table}</span>
+                        <span class="font-mono text-base font-bold text-slate-100">${s.count}</span>
+                      </div>
+                    `)}
+                  </div>
+                </div>
+              `}
+            </div>
+          `}
+
+          <!-- Tab 2: SCHEDULE (Lịch trình bất tử) -->
+          ${activeTab === 'schedule' && html`
+            <div class="flex flex-col gap-3">
+              <!-- Sidecar Protection Info -->
+              <div class="p-3.5 rounded-xl bg-slate-900/40 border border-white/10 flex flex-col gap-2">
+                <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <${Icons.Shield} />
+                  <span>Bảo vệ Lịch trình Bất tử (Auto-Resurrect)</span>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  Daemon chạy liên tục 24/7 dưới nền (<code class="font-mono text-indigo-400">restart_policy: always</code>). Nếu bạn tắt Antigravity hoặc crash đột ngột, Daemon sẽ tự đối soát thời gian và kích hoạt Agent chạy bù ngay khi mở lại!
+                </p>
+
+                <div class="flex flex-col divide-y divide-white/5 mt-1">
+                  ${cog?.schedules?.map((s, idx) => html`
+                    <div key=${idx} class="py-2.5 flex flex-col gap-1">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                          ${s.type}
+                        </span>
+                        <span class="font-mono text-xs font-semibold text-indigo-400">${s.expression}</span>
+                        <span class="font-mono text-[11px] text-slate-500">(${s.taskId})</span>
+                        <span class="text-[10px] px-2 py-0.2 rounded-full font-semibold ${s.status === 'OVERDUE' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}">
+                          ${s.status === 'OVERDUE' ? 'Quá hạn / Cần bù' : 'Đang giám sát'}
+                        </span>
+                      </div>
+                      <span class="text-xs text-slate-300">${s.task}</span>
+                    </div>
+                  `)}
+                </div>
+              </div>
+
+              <!-- Persistent Schedules Form & List -->
+              <div class="p-3.5 rounded-xl bg-slate-900/40 border border-white/10 flex flex-col gap-2.5">
+                <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <${Icons.Clock} />
+                  <span>Lịch trình Cố định (SQLite Store)</span>
+                </div>
+
+                <div class="flex flex-col divide-y divide-white/5">
+                  ${cog?.customSchedules?.map(cs => html`
+                    <div key=${cs.id} class="py-2 flex items-center justify-between gap-2">
+                      <div class="flex flex-col gap-0.5">
+                        <div class="flex items-center gap-2">
+                          <span class="font-mono text-xs font-semibold text-indigo-400">${cs.cron_or_time}</span>
+                          <span class="text-[10px] px-1.5 py-0.2 rounded font-bold ${cs.enabled ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-500'}">
+                            ${cs.enabled ? 'ACTIVE' : 'DONE'}
+                          </span>
+                        </div>
+                        <span class="text-xs text-slate-300">${cs.task_description}</span>
+                      </div>
+                      <button
+                        onClick=${() => handleDeleteSchedule(cs.id)}
+                        class="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all cursor-pointer"
+                        title="Xóa lịch"
+                      >
+                        <${Icons.Trash} />
+                      </button>
+                    </div>
+                  `)}
+                  ${(!cog?.customSchedules || cog.customSchedules.length === 0) && html`
+                    <div class="text-xs text-slate-500 py-2">Chưa có lịch cố định bổ sung.</div>
+                  `}
+                </div>
+
+                <!-- Add Form -->
+                <div class="pt-2 flex flex-col gap-2 border-t border-white/5">
+                  <div class="flex gap-2">
+                    <select
+                      value=${newSched.type}
+                      onChange=${e => setNewSched({ ...newSched, type: e.target.value })}
+                      class="w-24 bg-slate-950/80 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-200"
+                    >
+                      <option value="TIMER">TIMER</option>
+                      <option value="CRON">CRON</option>
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="VD: 2026-10-24 15:00 hoặc 0 */2 * * *"
+                      value=${newSched.time}
+                      onInput=${e => setNewSched({ ...newSched, time: e.target.value })}
+                      class="flex-1 bg-slate-950/80 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-slate-200 font-mono"
+                    />
+                  </div>
+                  <div class="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Nội dung nhiệm vụ khi thức dậy..."
+                      value=${newSched.desc}
+                      onInput=${e => setNewSched({ ...newSched, desc: e.target.value })}
+                      class="flex-1 bg-slate-950/80 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-slate-200"
+                    />
+                    <button
+                      onClick=${handleAddSchedule}
+                      class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer active:scale-95 transition-all"
+                    >
+                      Lưu lịch
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Execution Logs -->
+              <div class="p-3.5 rounded-xl bg-slate-900/40 border border-white/10 flex flex-col gap-2">
+                <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <${Icons.Activity} />
+                  <span>Nhật Ký Đánh Thức Nền (Wakeup Logs)</span>
+                </div>
+                <div class="flex flex-col divide-y divide-white/5">
+                  ${cog?.logs?.map(lg => html`
+                    <div key=${lg.id} class="py-2 flex flex-col gap-0.5 text-xs">
+                      <div class="flex items-center gap-2">
+                        <span class="text-[10px] px-1.5 py-0.2 rounded font-bold ${lg.status === 'SUCCESS' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">
+                          ${lg.status}
+                        </span>
+                        <span class="font-semibold text-slate-200">${lg.task_type}</span>
+                        <span class="font-mono text-[11px] text-slate-400">${lg.triggered_at}</span>
+                      </div>
+                      <span class="text-slate-400 text-[11px]">Mốc hẹn: <code class="font-mono text-indigo-400">${lg.scheduled_for}</code></span>
+                    </div>
+                  `)}
+                  ${(!cog?.logs || cog.logs.length === 0) && html`
+                    <div class="text-xs text-slate-500 py-2">Chưa có lịch sử kích hoạt.</div>
+                  `}
+                </div>
+              </div>
+            </div>
+          `}
+
+          <!-- Tab 3: INBOX (Phê duyệt kỹ năng) -->
+          ${activeTab === 'inbox' && html`
+            <div class="flex flex-col gap-3">
+              ${cog?.inboxItems?.map(item => {
+                const isPending = item.status === 'PENDING';
+                let statusBadge = html`<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Chờ duyệt</span>`;
+                if (item.status === 'APPROVED') {
+                  statusBadge = html`<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Đã duyệt</span>`;
+                } else if (item.status === 'REJECTED') {
+                  statusBadge = html`<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">Từ chối</span>`;
+                }
+
+                return html`
+                  <div key=${item.id} class="p-3.5 rounded-xl bg-slate-900/40 border border-white/10 flex flex-col gap-2">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="flex flex-col">
+                        <span class="font-mono text-xs font-bold text-indigo-400">${item.id}</span>
+                        <span class="text-xs font-bold text-slate-100">${item.title}</span>
+                      </div>
+                      ${statusBadge}
+                    </div>
+
+                    ${item.reason && html`
+                      <div class="text-xs text-slate-300 leading-relaxed">
+                        <strong class="text-slate-100">Lý do: </strong>${item.reason}
+                      </div>
+                    `}
+
+                    ${item.goal && html`
+                      <div class="text-xs text-slate-400">
+                        <strong class="text-slate-200">Mục tiêu: </strong>${item.goal}
+                      </div>
+                    `}
+
+                    ${isPending && html`
+                      <div class="mt-2 pt-2 border-t border-white/5 flex flex-col gap-2">
+                        <input
+                          type="text"
+                          placeholder="Chỉ đạo phê duyệt (tùy chọn)..."
+                          value=${inboxNotes[item.id] || ''}
+                          onInput=${e => setInboxNotes({ ...inboxNotes, [item.id]: e.target.value })}
+                          class="w-full bg-slate-950/80 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-slate-200"
+                        />
+                        <div class="flex gap-2 justify-end">
+                          <button
+                            onClick=${() => handleInboxDecision(item.id, 'APPROVED')}
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer active:scale-95 transition-all shadow-md shadow-emerald-600/20"
+                          >
+                            <${Icons.Check} />
+                            <span>Duyệt & Thực thi</span>
+                          </button>
+                          <button
+                            onClick=${() => handleInboxDecision(item.id, 'REJECTED')}
+                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/15 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/30 cursor-pointer active:scale-95 transition-all"
+                          >
+                            <${Icons.X} />
+                            <span>Từ chối</span>
+                          </button>
+                        </div>
+                      </div>
+                    `}
+                  </div>
+                `;
+              })}
+              {(!cog?.inboxItems || cog.inboxItems.length === 0) && html`
+                <div class="text-center py-8 text-xs text-slate-400 bg-slate-900/30 rounded-xl border border-white/10">
+                  Hộp thư INBOX.md không có đề xuất nào.
+                </div>
+              `}
+            </div>
+          `}
+
+          <!-- Tab 4: DREAMS & SIGNALS (Ký ức) -->
+          ${activeTab === 'dreams' && html`
+            <div class="flex flex-col gap-3">
+              <!-- Dreamer Trigger Card -->
+              <div class="p-3.5 rounded-xl bg-slate-900/40 border border-white/10 flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    <${Icons.Moon} />
+                    <span>Hợp Nhất Ký Ức 3 Pha</span>
+                  </div>
+                  <button
+                    onClick=${handleTriggerDreamer}
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white cursor-pointer shadow-md shadow-purple-600/20 active:scale-95 transition-all"
+                  >
+                    <${Icons.Sparkles} />
+                    <span>Chạy Dreamer</span>
+                  </button>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  Chu trình hợp nhất ký ức: <strong>Light Sleep</strong> thu gom Daily Signals ➔ <strong>REM Sleep</strong> đối chiếu giả thuyết DREAMS.md ➔ <strong>Deep Sleep</strong> thăng cấp quy tắc vào MEMORY.md.
+                </p>
+              </div>
+
+              <!-- Daily Signals Stream -->
+              <div class="p-3.5 rounded-xl bg-slate-900/40 border border-white/10 flex flex-col gap-2">
+                <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 pb-1 border-b border-white/5">
+                  <${Icons.Activity} />
+                  <span>Tín Hiệu Trong Ngày (Daily Signals)</span>
+                </div>
+                <div class="flex flex-col divide-y divide-white/5">
+                  ${cog?.signals?.map((sig, idx) => html`
+                    <div key=${idx} class="py-2.5 flex flex-col gap-1">
+                      <div class="flex items-center gap-2">
+                        <span class="font-mono text-xs font-semibold text-indigo-400">${sig.time}</span>
+                        <span class="text-[10px] px-2 py-0.2 rounded-full font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                          ${sig.tag}
+                        </span>
+                      </div>
+                      <span class="text-xs text-slate-200">${sig.text}</span>
+                    </div>
+                  `)}
+                  ${(!cog?.signals || cog.signals.length === 0) && html`
+                    <div class="text-center py-4 text-xs text-slate-400">Chưa có tín hiệu mới nào trong ngày.</div>
+                  `}
+                </div>
+              </div>
+            </div>
+          `}
+
+          <!-- Toast Alert -->
+          ${toast && html`
+            <div class="fixed bottom-4 right-4 left-4 max-w-sm mx-auto p-3 rounded-xl bg-slate-900 text-white border border-indigo-500/50 shadow-2xl flex items-center gap-2 text-xs z-50 animate-bounce">
+              <${Icons.AlertCircle} />
+              <span class="flex-1">${toast.msg}</span>
+            </div>
+          `}
+        </div>
+      `;
     }
 
-    // Listen to workspace changes from Antigravity host
-    if (window.sidecar?.onWorkspaceChange) {
-      window.sidecar.onWorkspaceChange((uris) => {
-        hostWorkspaceUris = uris || [];
-        loadDashboard();
-      });
-    }
-
-    loadDashboard();
-    setInterval(loadDashboard, 15000);
+    render(html`<${App} />`, document.getElementById('app'));
   </script>
 </body>
 </html>
