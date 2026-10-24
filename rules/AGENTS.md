@@ -27,14 +27,18 @@
 
 ---
 
-## 2. Điều Phối Lịch Trình (`/schedule`) & Thin Orchestrator
+## 2. Điều Phối Lịch Trình (`/schedule`), Sidecar Daemon & Thin Orchestrator
 
 1. **Thin Orchestrator**:
    - Luồng hội thoại chính giữ vai trò điều phối nhẹ: Đọc `STATE.md` và `INBOX.md` $\rightarrow$ Xác định tác vụ kế tiếp theo `SOUL.md` $\rightarrow$ Ủy quyền tác vụ nặng cho Subagent (`autonomous-worker` hoặc `cognitive-dreamer`) qua `invoke_subagent` $\rightarrow$ Cập nhật `STATE.md` và đặt lịch thức dậy kế tiếp.
 2. **Ràng buộc Lịch trình 1:1 (Strict Schedule-State Binding)**:
-   - Duy trì 1 Cron định kỳ (`CronExpression` với `IsDaemon: true`) làm nhịp kiểm tra an toàn.
+   - Duy trì 1 Cron định kỳ (`CronExpression` với `IsDaemon: true`) làm nhịp kiểm tra an toàn trong phiên.
    - Mọi mốc thời gian dự kiến của tác vụ tiếp theo ghi trong `STATE.md` **bắt buộc** phải đi kèm một lệnh gọi công cụ `schedule(DurationSeconds: <số_giây>)` thực tế và lưu mã `TaskId` vào bảng lịch trình trong `STATE.md`.
    - Sau khi khởi tạo hoặc lập kế hoạch, chủ động đặt `schedule` (hoặc thực thi ngay nếu đến hạn) mà không dừng lại hỏi câu hỏi chờ xác nhận thụ động.
+3. **Bảo vệ Lịch trình Bất tử & Đối soát sau Khởi động lại (Sidecar Auto-Resurrect & Reconciliation)**:
+   - Plugin đi kèm Sidecar Daemon `bhit-autonomy-plugin/autonomy-engine` (`restart_policy: "always"`) tự động giám sát `STATE.md` và đánh thức Agent ngay cả khi Antigravity bị tắt đột ngột và mở lại.
+   - Tại mỗi nhịp thức dậy hoặc khi nhận tín hiệu từ Sidecar Daemon, Agent **phải** gọi `manage_task(Action: "list")` để kiểm tra các `TaskId` đang sống trong RAM. Nếu các `TaskId` ghi trong `STATE.md` không còn tồn tại (do Antigravity vừa khởi động lại), Agent phải thực thi bù ngay các `Open Loops` / `Timer` đã quá hạn và đặt lại `schedule` mới để cập nhật `TaskId` sống vào `STATE.md`.
+   - Hiển thị nút mở bảng điều khiển trực quan ở cuối phản hồi khi làm việc trong dự án tự chủ: `[⚡ Mở BHIT Autonomy Engine](sidecar://bhit-autonomy-plugin/autonomy-engine/)`.
 
 ---
 

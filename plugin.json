@@ -2,7 +2,7 @@
   "name": "bhit-autonomy-plugin",
   "displayName": "BHIT Autonomy Engine",
   "description": "Hệ điều hành AI Agent tự chủ 24/7 trên Antigravity thông qua lịch trình /schedule, kiến trúc nhận thức phân tầng (.agents/cognition/), nạp tri thức bay:learn, hợp nhất bộ nhớ 3 pha và đề xuất kỹ năng Non-Blocking.",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "suggestedPrompts": [
     "Khởi tạo hệ thống tự chủ cho Agent theo Goal trong SOUL.md",
     "bay:learn Nạp tri thức và tài liệu mới vào hệ thống nhận thức",

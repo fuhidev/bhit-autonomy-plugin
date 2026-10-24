@@ -28,29 +28,32 @@ Khi nhận yêu cầu khởi tạo hệ thống tự chủ trong Workspace:
    - Dựa trên `Goals` trong `SOUL.md`, thiết lập cơ sở dữ liệu dự án (ví dụ: SQLite `data.db` và script quản lý `scripts/manage_data.py`) nếu cần theo dõi các thực thể có cấu trúc.
    - Ghi nhận thông tin hạ tầng vào mục `## 3. Hạ tầng Dữ liệu Dự án` trong `STATE.md`.
 
-3. **Thiết lập Lịch trình Tự chủ (`/schedule`)**:
+3. **Thiết lập Lịch trình Tự chủ (`/schedule`) & Bảng Điều Khiển Sidecar**:
    - **Cron định kỳ (Heartbeat)**: Gọi công cụ `schedule` với `CronExpression` (ví dụ: `"0 */2 * * *"`), `IsDaemon: true`.
    - **One-shot Timer cho tác vụ kế tiếp**: Tính số giây từ thời điểm hiện tại đến mốc thực thi của tác vụ đầu tiên trong `STATE.md` và gọi `schedule(DurationSeconds: <số_giây>)` (hoặc thực thi ngay nếu đã đến hạn).
    - Ghi nhận đầy đủ các mã `TaskId` vào bảng lịch trình trong `STATE.md`.
+   - Cung cấp nút mở bảng điều khiển Aux Pane `[⚡ Mở BHIT Autonomy Engine](sidecar://bhit-autonomy-plugin/autonomy-engine/)` để Người vận hành theo dõi tiến độ, lịch trình bất tử (Auto-Resurrect) và duyệt `INBOX.md` trực tiếp.
    - Kết thúc bước khởi tạo và tự động chuyển sang trạng thái vận hành mà không dừng lại chờ câu trả lời xác nhận thủ công.
 
 ---
 
-## 2. Chu Kỳ Vận Hành Tự Chủ (OODA Loop)
+## 2. Chu Kỳ Vận Hành Tự Chủ (OODA Loop & Schedule Reconciliation)
 
-Tại mỗi nhịp thức dậy từ `/schedule`:
+Tại mỗi nhịp thức dậy từ `/schedule` hoặc từ Sidecar Daemon `bhit-autonomy-plugin/autonomy-engine`:
 
 ```text
-[WAKEUP]
+[WAKEUP / RESURRECT]
    │
-   ├── 1. OBSERVE : Đọc STATE.md và INBOX.md
-   ├── 2. ORIENT  : Đối chiếu tiến độ hiện tại với Goals trong SOUL.md
-   ├── 3. DECIDE  :
-   │       ├── Đủ kỹ năng & Có tác vụ đến hạn ➔ Chuyển sang ACT
-   │       ├── Thiếu kỹ năng cần thiết       ➔ Ghi đề xuất vào INBOX.md + Phát Toast Alert
-   │       └── Cuối ngày / Ca hợp nhất ký ức  ➔ Gọi Subagent cognitive-dreamer
-   ├── 4. ACT     : Giao tác vụ thực thi cho Subagent autonomous-worker
-   └── 5. SCHEDULE: Cập nhật STATE.md, ghi Daily Signals và đặt schedule(DurationSeconds) cho mốc kế tiếp
+   ├── 0. RECONCILE: Gọi manage_task(Action: "list") đối chiếu với TaskId trong STATE.md.
+   │                 Nếu Antigravity vừa bật lại làm mất TaskId cũ -> Khôi phục lại Cron/Timer!
+   ├── 1. OBSERVE  : Đọc STATE.md và INBOX.md
+   ├── 2. ORIENT   : Đối chiếu tiến độ hiện tại với Goals trong SOUL.md
+   ├── 3. DECIDE   :
+   │       ├── Đủ kỹ năng & Có tác vụ đến hạn/quá hạn ➔ Chuyển sang ACT
+   │       ├── Thiếu kỹ năng cần thiết                ➔ Ghi đề xuất vào INBOX.md + Phát Toast Alert
+   │       └── Cuối ngày / Ca hợp nhất ký ức           ➔ Gọi Subagent cognitive-dreamer
+   ├── 4. ACT      : Giao tác vụ thực thi cho Subagent autonomous-worker
+   └── 5. SCHEDULE : Cập nhật STATE.md, ghi Daily Signals và đặt schedule(DurationSeconds) cho mốc kế tiếp
 ```
 
 ---

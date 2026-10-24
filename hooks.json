@@ -1,0 +1,12 @@
+{
+  "bhit-autonomy-session-guard": {
+    "enabled": true,
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "python \"~/.gemini/config/plugins/bhit-autonomy-plugin/scripts/session_reconcile_hook.py\"",
+        "timeout": 10
+      }
+    ]
+  }
+}

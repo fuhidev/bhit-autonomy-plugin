@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BHIT Autonomy Engine</title>
+  <script src="/preload.js"></script>
+  <style>
+    :root {
+      --bg-primary: var(--background, #0f172a);
+      --fg-primary: var(--foreground, #f1f5f9);
+      --card-bg: rgba(148, 163, 184, 0.08);
+      --card-border: rgba(148, 163, 184, 0.18);
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 14px;
+      background: var(--bg-primary);
+      color: var(--fg-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .daemon-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.14);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    select, input, textarea {
+      background: var(--card-bg);
+      color: var(--fg-primary);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 6px 9px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    select {
+      flex: 1;
+      min-width: 170px;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    button:hover {
+      opacity: 0.92;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-ghost {
+      background: var(--card-bg);
+      color: var(--fg-primary);
+      border-color: var(--card-border);
+    }
+
+    .btn-sm {
+      padding: 3px 8px;
+      font-size: 11px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 12px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      border-bottom: 2px solid transparent;
+      border-radius: 0;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .badge-overdue {
+      background: rgba(239, 68, 68, 0.18);
+      color: #ef4444;
+    }
+
+    .badge-duesoon {
+      background: rgba(245, 158, 11, 0.18);
+      color: #f59e0b;
+    }
+
+    .badge-upcoming {
+      background: rgba(59, 130, 246, 0.16);
+      color: #60a5fa;
+    }
+
+    .badge-done {
+      background: rgba(16, 185, 129, 0.16);
+      color: #10b981;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 11px;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .loop-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .loop-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .loop-left {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      flex: 1;
+    }
+
+    .loop-time {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .done-text {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 7px;
+    }
+
+    .stat-box {
+      background: rgba(148, 163, 184, 0.06);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 7px 9px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .stat-val {
+      font-size: 15px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 14px;
+      right: 14px;
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 9px 13px;
+      font-size: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+      display: none;
+      z-index: 999;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <div class="brand-title">BHIT Autonomy Engine</div>
+        <div class="brand-sub" id="daemonSub">Persistent Sidecar Scheduler & Cognition UI</div>
+      </div>
+    </div>
+    <div class="daemon-pill" id="daemonBadge">
+      <span class="pulse-dot"></span>
+      <span id="daemonStatusText">Auto-Resurrect ON</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <select id="projectSelect" onchange="onSelectProject()"></select>
+    <button class="btn-primary" onclick="reconcileNow()" title="Kiểm tra TaskId thực tế, khôi phục lịch trình bị tắt và chạy bù tác vụ quá hạn">
+      ⚡ Đồng bộ & Đánh thức
+    </button>
+    <button class="btn-ghost" onclick="loadDashboard()" title="Làm mới dữ liệu">🔄</button>
+  </div>
+
+  <div id="projectMetaBar" class="card" style="padding: 8px 11px; display: none;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+      <div style="font-size: 11px;">
+        <span style="color: var(--muted);">Phiên gắn kết:</span>
+        <span class="mono" id="boundConvId">Chưa có</span>
+        <button class="btn-ghost btn-sm" id="openConvBtn" style="margin-left: 4px; display: none;" onclick="openBoundConversation()">Mở Chat ↗</button>
+      </div>
+      <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; cursor: pointer;">
+        <input type="checkbox" id="autoWakeToggle" onchange="toggleAutoWake(this.checked)" />
+        <span>Tự động đánh thức khi đến hạn / mở lại App</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('state')" id="tab-state">⚡ Bàn làm việc</button>
+    <button class="tab" onclick="switchTab('schedule')" id="tab-schedule">⏰ Lịch trình <span id="schedCountBadge" class="badge badge-upcoming">0</span></button>
+    <button class="tab" onclick="switchTab('inbox')" id="tab-inbox">📬 INBOX <span id="inboxCountBadge" class="badge badge-duesoon">0</span></button>
+    <button class="tab" onclick="switchTab('dreams')" id="tab-dreams">🌙 Ký ức & Tín hiệu</button>
+  </div>
+
+  <div id="view-state"></div>
+  <div id="view-schedule" style="display: none;"></div>
+  <div id="view-inbox" style="display: none;"></div>
+  <div id="view-dreams" style="display: none;"></div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    let currentTab = 'state';
+    let currentWorkspacePath = '';
+    let dashboardData = null;
+    let hostWorkspaceUris = [];
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 3500);
+    }
+
+    async function apiCall(path, body = {}) {
+      const fetchFn = window.sidecar?.fetch || fetch;
+      const res = await fetchFn(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Request failed');
+      }
+      return data;
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      for (const t of ['state', 'schedule', 'inbox', 'dreams']) {
+        document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+        document.getElementById('view-' + t).style.display = t === tab ? 'block' : 'none';
+      }
+      renderViews();
+    }
+
+    function onSelectProject() {
+      const sel = document.getElementById('projectSelect');
+      currentWorkspacePath = sel.value;
+      loadDashboard();
+    }
+
+    function openBoundConversation() {
+      const convId = dashboardData?.activeProject?.active_conversation_id;
+      if (convId && window.sidecar?.ui?.toggleConversation) {
+        window.sidecar.ui.toggleConversation(convId);
+      }
+    }
+
+    async function toggleAutoWake(checked) {
+      if (!currentWorkspacePath) return;
+      try {
+        await apiCall('/api/toggle-auto-wake', {
+          workspacePath: currentWorkspacePath,
+          autoWake: checked,
+        });
+        showToast(checked ? 'Đã bật Tự động đánh thức 24/7' : 'Đã tạm dừng Tự động đánh thức');
+        loadDashboard();
+      } catch (err) {
+        showToast('Lỗi: ' + err.message);
+      }
+    }
+
+    async function reconcileNow() {
+      if (!currentWorkspacePath) return;
+      try {
+        showToast('Đang gửi lệnh Đồng bộ & Đánh thức Agent...');
+        const res = await apiCall('/api/wake-now', {
+          workspacePath: currentWorkspacePath,
+          mode: 'RECONCILE',
+        });
+        showToast('⚡ Đã đánh thức Agent thành công!');
+        loadDashboard();
+      } catch (err) {
+        showToast('Lỗi: ' + err.message);
+      }
+    }
+
+    async function runOpenLoopNow(timeStr, desc) {
+      try {
+        showToast('Đang giao Open Loop cho Agent...');
+        await apiCall('/api/wake-now', {
+          workspacePath: currentWorkspacePath,
+          mode: 'OPEN_LOOP',
+          loopTime: timeStr,
+          loopDescription: desc,
+        });
+        showToast('▶ Đã kích hoạt thực thi Open Loop!');
+        loadDashboard();
+      } catch (err) {
+        showToast('Lỗi: ' + err.message);
+      }
+    }
+
+    async function toggleOpenLoopDone(timeStr, done) {
+      try {
+        await apiCall('/api/toggle-open-loop', {
+          workspacePath: currentWorkspacePath,
+          timeStr,
+          done,
+        });
+        loadDashboard();
+      } catch (err) {
+        showToast('Lỗi: ' + err.message);
+      }
+    }
+
+    async function decideInbox(inboxId, decision) {
+      const noteEl = document.getElementById('note-' + inboxId);
+      const userNote = noteEl ? noteEl.value.trim() : '';
+      try {
+        showToast(`Đang cập nhật ${inboxId} -> ${decision}...`);
+        await apiCall('/api/inbox-decision', {
+          workspacePath: currentWorkspacePath,
+          inboxId,
+          decision,
+          userNote,
+          wakeAgent: true,
+        });
+        showToast(`✅ Đã ${decision} ${inboxId} & đánh thức Agent!`);
+        loadDashboard();
+      } catch (err) {
+        showToast('Lỗi: ' + err.message);
+      }
+    }
+
+    async function addCustomSchedule() {
+      const type = document.getElementById('newSchedType').value;
+      const cronOrTime = document.getElementById('newSchedTime').value;
+      const taskDescription = document.getElementById('newSchedDesc').value;
+      try {
+        await apiCall('/api/add-schedule', {
+          workspacePath: currentWorkspacePath,
+          scheduleType: type,
+          cronOrTime,
+          taskDescription,
+        });
+        showToast('✅ Đã lưu lịch trình cố định vào SQLite Daemon!');
+        loadDashboard();
+      } catch (err) {
+        showToast('Lỗi: ' + err.message);
+      }
+    }
+
+    async function deleteCustomSchedule(id) {
+      try {
+        await apiCall('/api/delete-schedule', { id });
+        showToast('Đã xóa lịch trình');
+        loadDashboard();
+      } catch (err) {
+        showToast('Lỗi: ' + err.message);
+      }
+    }
+
+    async function triggerDreamerNow() {
+      try {
+        showToast('🌙 Đang kích hoạt chu trình hợp nhất ký ức 3 pha...');
+        await apiCall('/api/wake-now', {
+          workspacePath: currentWorkspacePath,
+          mode: 'DREAMER',
+        });
+        showToast('🌙 Đã gọi Subagent cognitive-dreamer!');
+        loadDashboard();
+      } catch (err) {
+        showToast('Lỗi: ' + err.message);
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderViews() {
+      if (!dashboardData || !dashboardData.activeProject) {
+        document.getElementById('view-state').innerHTML = `
+          <div class="card">
+            <div class="card-title">Chưa phát hiện dự án tự chủ</div>
+            <p style="color: var(--muted); margin: 0;">
+              Không tìm thấy dự án nào có cấu trúc <code>.agents/cognition/STATE.md</code>.
+              Hãy yêu cầu Agent khởi tạo hệ thống tự chủ bằng skill <code>bh-autonomous-agent</code>.
+            </p>
+          </div>`;
+        return;
+      }
+
+      const proj = dashboardData.activeProject;
+      const cog = dashboardData.cognition;
+
+      // Update header & meta bar
+      document.getElementById('daemonSub').textContent =
+        `Heartbeat: ${dashboardData.daemon.serverTime} • Tick #${dashboardData.daemon.tickCount}`;
+      document.getElementById('projectMetaBar').style.display = 'block';
+      document.getElementById('boundConvId').textContent =
+        proj.active_conversation_id ? proj.active_conversation_id.slice(0, 13) + '...' : 'Tự tạo phiên mới';
+      document.getElementById('openConvBtn').style.display = proj.active_conversation_id ? 'inline-flex' : 'none';
+      document.getElementById('autoWakeToggle').checked = Boolean(proj.auto_wake);
+
+      const pendingInbox = cog.inboxItems.filter((i) => i.status === 'PENDING').length;
+      document.getElementById('inboxCountBadge').textContent = pendingInbox;
+      document.getElementById('schedCountBadge').textContent =
+        cog.schedules.length + cog.customSchedules.length;
+
+      // 1. Render STATE tab
+      const loopsHtml = cog.openLoops.length
+        ? cog.openLoops
+            .map((l) => {
+              let badge = '<span class="badge badge-upcoming">Sắp tới</span>';
+              if (l.done) badge = '<span class="badge badge-done">Hoàn thành</span>';
+              else if (l.status === 'OVERDUE') badge = `<span class="badge badge-overdue">Quá hạn (${Math.abs(l.diffMinutes)}p)</span>`;
+              else if (l.status === 'DUE_SOON') badge = `<span class="badge badge-duesoon">Còn ${l.diffMinutes}p</span>`;
+
+              return `
+                <div class="loop-item">
+                  <div class="loop-left">
+                    <input type="checkbox" ${l.done ? 'checked' : ''} onchange="toggleOpenLoopDone('${escapeHtml(l.timeStr)}', this.checked)" />
+                    <div>
+                      <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                        <span class="loop-time">${escapeHtml(l.timeStr)}</span>
+                        ${badge}
+                      </div>
+                      <div class="${l.done ? 'done-text' : ''}" style="margin-top:3px;">${escapeHtml(l.description)}</div>
+                    </div>
+                  </div>
+                  ${
+                    !l.done
+                      ? `<button class="btn-ghost btn-sm" onclick="runOpenLoopNow('${escapeHtml(l.timeStr)}', '${escapeHtml(l.description.replace(/'/g, "\\'"))}')">▶ Chạy</button>`
+                      : ''
+                  }
+                </div>`;
+            })
+            .join('')
+        : '<div style="color:var(--muted);">Không có Open Loop nào.</div>';
+
+      const metricsHtml = cog.goalProgress.metrics.length
+        ? `<ul style="margin:6px 0; padding-left:18px;">${cog.goalProgress.metrics.map((m) => `<li>${escapeHtml(m)}</li>`).join('')}</ul>`
+        : '';
+
+      const dbStatsHtml = cog.dbStats.length
+        ? `<div class="card">
+            <div class="card-title"><span>🗄️ Hạ tầng SQLite (data.db)</span></div>
+            <div class="stat-grid">
+              ${cog.dbStats
+                .map(
+                  (s) => `
+                <div class="stat-box">
+                  <div class="stat-label">${escapeHtml(s.table)}</div>
+                  <div class="stat-val">${s.count}</div>
+                </div>`
+                )
+                .join('')}
+            </div>
+          </div>`
+        : '';
+
+      document.getElementById('view-state').innerHTML = `
+        <div class="card">
+          <div class="card-title">
+            <span>🎯 Tiến độ Mục tiêu (Goal Progress)</span>
+            <span class="mono" style="color:var(--accent);">${escapeHtml(cog.goalProgress.cycle)}</span>
+          </div>
+          ${metricsHtml}
+          ${
+            cog.goalProgress.goalGap
+              ? `<div style="margin-top:6px; padding:7px; border-radius:6px; background:rgba(59,130,246,0.1); font-size:12px;">
+                  <strong>Goal Gap:</strong> ${escapeHtml(cog.goalProgress.goalGap)}
+                 </div>`
+              : ''
+          }
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>🔄 Các Vòng Lặp Đang Mở (Open Loops)</span>
+            <span style="font-size:11px;">${cog.openLoops.filter((x) => !x.done).length} đang mở</span>
+          </div>
+          ${loopsHtml}
+        </div>
+
+        ${dbStatsHtml}
+      `;
+
+      // 2. Render SCHEDULE tab
+      const stateSchedHtml = cog.schedules.length
+        ? cog.schedules
+            .map((s) => {
+              const badge =
+                s.status === 'OVERDUE'
+                  ? '<span class="badge badge-overdue">Cần chạy bù / Reconcile</span>'
+                  : '<span class="badge badge-done">Đang theo dõi bởi Sidecar</span>';
+              return `
+                <div class="loop-item">
+                  <div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span class="badge badge-upcoming">${escapeHtml(s.type)}</span>
+                      <span class="loop-time">${escapeHtml(s.expression)}</span>
+                      <span class="mono" style="color:var(--muted);">(${escapeHtml(s.taskId)})</span>
+                      ${badge}
+                    </div>
+                    <div style="margin-top:3px;">${escapeHtml(s.task)}</div>
+                  </div>
+                </div>`;
+            })
+            .join('')
+        : '<div style="color:var(--muted);">Chưa có lịch trình trong mục 4 của STATE.md</div>';
+
+      const customSchedHtml = cog.customSchedules.length
+        ? cog.customSchedules
+            .map(
+              (cs) => `
+              <div class="loop-item">
+                <div>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span class="badge badge-upcoming">${escapeHtml(cs.schedule_type)}</span>
+                    <span class="loop-time">${escapeHtml(cs.cron_or_time)}</span>
+                    <span class="badge ${cs.enabled ? 'badge-done' : 'badge-overdue'}">${cs.enabled ? 'Active' : 'Done'}</span>
+                  </div>
+                  <div style="margin-top:3px;">${escapeHtml(cs.task_description)}</div>
+                </div>
+                <button class="btn-ghost btn-sm" onclick="deleteCustomSchedule(${cs.id})">🗑️</button>
+              </div>`
+            )
+            .join('')
+        : '<div style="color:var(--muted); font-size:12px;">Chưa có lịch trình bổ sung.</div>';
+
+      const logsHtml = cog.logs.length
+        ? cog.logs
+            .map(
+              (lg) => `
+              <div class="loop-item" style="font-size:11px;">
+                <div>
+                  <div>
+                    <span class="badge ${lg.status === 'SUCCESS' ? 'badge-done' : 'badge-overdue'}">${escapeHtml(lg.status)}</span>
+                    <strong style="margin-left:4px;">${escapeHtml(lg.task_type)}</strong>
+                    <span class="mono" style="color:var(--muted); margin-left:4px;">${escapeHtml(lg.triggered_at)}</span>
+                  </div>
+                  <div style="color:var(--muted); margin-top:2px;">Mốc lịch: ${escapeHtml(lg.scheduled_for)}</div>
+                </div>
+              </div>`
+            )
+            .join('')
+        : '<div style="color:var(--muted); font-size:12px;">Chưa có lịch sử kích hoạt tự động.</div>';
+
+      document.getElementById('view-schedule').innerHTML = `
+        <div class="card">
+          <div class="card-title">
+            <span>🛡️ Cơ chế Bảo vệ Lịch trình Bất tử (Sidecar Daemon)</span>
+          </div>
+          <p style="margin:0 0 8px 0; font-size:12px; color:var(--muted);">
+            Sidecar này chạy với <code>restart_policy: "always"</code>. Ngay cả khi Antigravity bị tắt đột ngột và bật lại, Sidecar tự động đối chiếu các mốc thời gian trong <code>STATE.md</code> và SQLite để đánh thức Agent chạy bù mà không bị mất việc!
+          </p>
+          ${stateSchedHtml}
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span>➕ Lịch trình Cố định (SQLite Persistent Schedules)</span></div>
+          ${customSchedHtml}
+          <div class="form-row">
+            <select id="newSchedType" style="flex:0 0 95px;">
+              <option value="CRON">CRON</option>
+              <option value="TIMER">TIMER</option>
+            </select>
+            <input id="newSchedTime" placeholder="VD: 0 */2 * * * hoặc 2026-10-24 14:00" style="flex:1;" />
+          </div>
+          <div class="form-row">
+            <input id="newSchedDesc" placeholder="Nhiệm vụ khi thức dậy..." style="flex:1;" />
+            <button class="btn-primary" onclick="addCustomSchedule()">Lưu lịch</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span>📜 Nhật ký Đánh thức Tự động (Wakeup Logs)</span></div>
+          ${logsHtml}
+        </div>
+      `;
+
+      // 3. Render INBOX tab
+      const inboxHtml = cog.inboxItems.length
+        ? cog.inboxItems
+            .map((item) => {
+              const isPending = item.status === 'PENDING';
+              const badgeClass =
+                item.status === 'APPROVED'
+                  ? 'badge-done'
+                  : item.status === 'REJECTED'
+                  ? 'badge-overdue'
+                  : 'badge-duesoon';
+              return `
+                <div class="card">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                    <div>
+                      <span class="mono" style="color:var(--accent); font-weight:700;">${escapeHtml(item.id)}</span>
+                      <div style="font-weight:700; margin-top:2px;">${escapeHtml(item.title)}</div>
+                    </div>
+                    <span class="badge ${badgeClass}">${escapeHtml(item.status)}</span>
+                  </div>
+                  ${item.reason ? `<div style="margin-top:6px; font-size:12px;"><strong>Lý do:</strong> ${escapeHtml(item.reason)}</div>` : ''}
+                  ${item.goal ? `<div style="margin-top:4px; font-size:12px; color:var(--muted);"><strong>Mục tiêu:</strong> ${escapeHtml(item.goal)}</div>` : ''}
+                  ${
+                    isPending
+                      ? `<div class="form-row" style="margin-top:10px;">
+                          <input id="note-${escapeHtml(item.id)}" placeholder="Chỉ đạo / Ghi chú phê duyệt (tùy chọn)..." style="flex:1;" />
+                          <button class="btn-success btn-sm" onclick="decideInbox('${escapeHtml(item.id)}', 'APPROVED')">✅ Duyệt & Thực thi</button>
+                          <button class="btn-danger btn-sm" onclick="decideInbox('${escapeHtml(item.id)}', 'REJECTED')">❌ Từ chối</button>
+                         </div>`
+                      : ''
+                  }
+                </div>`;
+            })
+            .join('')
+        : '<div class="card" style="color:var(--muted);">Không có đề xuất nào trong INBOX.md</div>';
+
+      document.getElementById('view-inbox').innerHTML = inboxHtml;
+
+      // 4. Render DREAMS & SIGNALS tab
+      const signalsHtml = cog.signals.length
+        ? cog.signals
+            .map(
+              (sig) => `
+              <div class="loop-item">
+                <div>
+                  <span class="loop-time">${escapeHtml(sig.time)}</span>
+                  <span class="badge badge-upcoming" style="margin-left:4px;">${escapeHtml(sig.tag)}</span>
+                  <div style="margin-top:3px;">${escapeHtml(sig.text)}</div>
+                </div>
+              </div>`
+            )
+            .join('')
+        : '<div style="color:var(--muted);">Chưa có tín hiệu mới trong ngày.</div>';
+
+      document.getElementById('view-dreams').innerHTML = `
+        <div class="card">
+          <div class="card-title">
+            <span>🌙 Hợp nhất Ký ức 3 Pha (Cognitive Dreamer)</span>
+            <button class="btn-primary btn-sm" onclick="triggerDreamerNow()">🌙 Chạy Dreamer ngay</button>
+          </div>
+          <p style="margin:0; font-size:12px; color:var(--muted);">
+            Thu gom <code>Daily Signals</code> từ <code>STATE.md</code> (Light Sleep) ➔ Đối chiếu giả thuyết trong <code>DREAMS.md</code> (REM Sleep) ➔ Thăng cấp quy tắc vào <code>MEMORY.md</code> (Deep Sleep).
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>📡 Tín hiệu trong ngày (Daily Signals)</span></div>
+          ${signalsHtml}
+        </div>
+      `;
+    }
+
+    async function loadDashboard() {
+      try {
+        const data = await apiCall('/api/dashboard', {
+          workspacePath: currentWorkspacePath,
+          workspaceUris: hostWorkspaceUris,
+        });
+        dashboardData = data;
+
+        const sel = document.getElementById('projectSelect');
+        sel.innerHTML = '';
+        for (const p of data.projects) {
+          const opt = document.createElement('option');
+          opt.value = p.workspace_path;
+          opt.textContent = `${p.name} (${p.workspace_path})`;
+          if (data.activeProject && p.workspace_path === data.activeProject.workspace_path) {
+            opt.selected = true;
+            currentWorkspacePath = p.workspace_path;
+          }
+          sel.appendChild(opt);
+        }
+
+        renderViews();
+      } catch (err) {
+        console.error('Failed to load dashboard:', err);
+      }
+    }
+
+    // Listen to workspace changes from Antigravity host
+    if (window.sidecar?.onWorkspaceChange) {
+      window.sidecar.onWorkspaceChange((uris) => {
+        hostWorkspaceUris = uris || [];
+        loadDashboard();
+      });
+    }
+
+    loadDashboard();
+    setInterval(loadDashboard, 15000);
+  </script>
+</body>
+</html>
