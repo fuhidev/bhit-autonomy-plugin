@@ -712,7 +712,7 @@
                   </div>
                 `;
               })}
-              {(!cog?.inboxItems || cog.inboxItems.length === 0) && html`
+              ${(!cog?.inboxItems || cog.inboxItems.length === 0) && html`
                 <div class="text-center py-8 text-xs text-slate-400 bg-slate-900/30 rounded-xl border border-white/10">
                   Hộp thư INBOX.md không có đề xuất nào.
                 </div>
