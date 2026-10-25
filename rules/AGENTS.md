@@ -18,40 +18,51 @@
    - Bàn làm việc hiện tại: Tiến độ Goal, Các vòng lặp đang mở (`Open Loops`), Hạ tầng dữ liệu, Lịch `/schedule` hiện hành và Tín hiệu trong ngày (`Daily Signals`).
    - ✏️ **Read/Write**: Đọc đầu tiên ở mỗi nhịp `/schedule` và cập nhật sau mỗi hành động.
 4. **`DREAMS.md`** (`.agents/cognition/DREAMS.md`):
-   - Lưu danh sách Giả thuyết ứng viên (`Candidate Truths`) và Nhật ký hợp nhất ký ức (`Dream Diary`).
+   - Lưu danh sách Giả thuyết ứng viên (`Candidate Truths`), Quy trình ứng viên (`Candidate Procedures`) và Nhật ký hợp nhất ký ức (`Dream Diary`).
    - ✏️ Do Subagent `cognitive-dreamer` quản lý.
 5. **`MEMORY.md`** (`.agents/cognition/MEMORY.md`):
-   - Ký ức dài hạn đã xác thực: Chỉ lưu các quy tắc vượt qua ngưỡng kiểm chứng từ `DREAMS.md` hoặc được nạp/phê duyệt trực tiếp từ Người vận hành.
-6. **`INBOX.md`** (`.agents/cognition/INBOX.md`):
-   - Hộp thư lưu các đề xuất mở rộng kỹ năng và câu hỏi chiến lược chờ phê duyệt bất đồng bộ.
+   - Ký ức dài hạn đã xác thực (Declarative Memory): Chỉ lưu các quy tắc vượt qua ngưỡng kiểm chứng từ `DREAMS.md` hoặc được nạp/phê duyệt trực tiếp từ Người vận hành.
+6. **`.agents/skills/<skill-name>/SKILL.md`**:
+   - Ký ức quy trình thực thi (Procedural Playbook Memory): Lưu chuỗi thao tác chuẩn sử dụng các công cụ sẵn có.
+   - ✏️ **Khởi tạo mới**: Do Subagent `cognitive-dreamer` độc quyền tạo mới vào cuối chu kỳ từ các quy trình lặp lại đã kiểm chứng.
+   - ✏️ **Chỉnh sửa (`edit_file`)**: Subagent `autonomous-worker` được phép cập nhật bước thực thi trên các `SKILL.md` đang có theo cơ chế **Probationary Override (`1/3` $\rightarrow$ `3/3`)** kèm lưu dòng `Fallback cũ` tạm thời; khi đạt đồng thuận `3/3` (hoặc qua ca `cognitive-dreamer`), dòng `Fallback cũ` được xóa bỏ hoàn toàn để tránh tràn lịch sử.
+7. **`INBOX.md`** (`.agents/cognition/INBOX.md`):
+   - Hộp thư lưu các yêu cầu cấp thêm công cụ/quyền hạn (khi vượt quá khả năng tự tạo của Agent) và các câu hỏi chiến lược chờ phê duyệt bất đồng bộ.
 
 ---
 
 ## 2. Điều Phối Lịch Trình (`/schedule`), Sidecar Daemon & Thin Orchestrator
 
-1. **Thin Orchestrator**:
-   - Luồng hội thoại chính giữ vai trò điều phối nhẹ: Đọc `STATE.md` và `INBOX.md` $\rightarrow$ Xác định tác vụ kế tiếp theo `SOUL.md` $\rightarrow$ Ủy quyền tác vụ nặng cho Subagent (`autonomous-worker` hoặc `cognitive-dreamer`) qua `invoke_subagent` $\rightarrow$ Cập nhật `STATE.md` và đặt lịch thức dậy kế tiếp.
+1. **Thin Orchestrator & Ghim Phiên Điều Phối Duy Nhất (`Orchestrator Conversation ID`)**:
+   - Mỗi dự án tự chủ chỉ có **1 Conversation điều phối chính duy nhất** được ghi tại Mục 4 của `STATE.md`: `- **Orchestrator Conversation ID**: \`<UUID>\``.
+   - **Nếu `Conversation ID` hiện tại trùng với `Orchestrator Conversation ID` trong `STATE.md`** (hoặc đang khởi tạo Day 0 khi `STATE.md` chưa có ID): Phiên hiện tại giữ vai trò **Thin Orchestrator** (Đọc `STATE.md` và `INBOX.md` $\rightarrow$ Xác định tác vụ kế tiếp theo `SOUL.md` $\rightarrow$ Ủy quyền tác vụ nặng cho Subagent `autonomous-worker` hoặc `cognitive-dreamer` $\rightarrow$ Cập nhật `STATE.md` và đặt lịch `schedule` kế tiếp).
+   - **Nếu `Conversation ID` hiện tại KHÁC với `Orchestrator Conversation ID` trong `STATE.md`**: Phiên hiện tại chỉ đóng vai trò **phiên hỗ trợ / debug phụ (Ad-hoc Session)**. Tuyệt đối **KHÔNG** tự ý gọi công cụ `schedule()`, không chạy vòng lặp tự chủ và không ghi đè `TaskId` hay `Orchestrator Conversation ID` của phiên chính trong `STATE.md`.
 2. **Ràng buộc Lịch trình 1:1 (Strict Schedule-State Binding)**:
-   - Duy trì 1 Cron định kỳ (`CronExpression` với `IsDaemon: true`) làm nhịp kiểm tra an toàn trong phiên.
-   - Mọi mốc thời gian dự kiến của tác vụ tiếp theo ghi trong `STATE.md` **bắt buộc** phải đi kèm một lệnh gọi công cụ `schedule(DurationSeconds: <số_giây>)` thực tế và lưu mã `TaskId` vào bảng lịch trình trong `STATE.md`.
-   - Sau khi khởi tạo hoặc lập kế hoạch, chủ động đặt `schedule` (hoặc thực thi ngay nếu đến hạn) mà không dừng lại hỏi câu hỏi chờ xác nhận thụ động.
+   - Duy trì 1 Cron định kỳ (`CronExpression` với `IsDaemon: true`) làm nhịp kiểm tra an toàn trong phiên Orchestrator.
+   - Mọi mốc thời gian dự kiến của tác vụ tiếp theo ghi trong `STATE.md` **bắt buộc** phải đi kèm một lệnh gọi công cụ `schedule(DurationSeconds: <số_giây>)` thực tế tại phiên Orchestrator và lưu mã `TaskId` vào bảng lịch trình trong `STATE.md`.
+   - Sau khi khởi tạo hoặc lập kế hoạch tại phiên Orchestrator, chủ động đặt `schedule` (hoặc thực thi ngay nếu đến hạn) mà không dừng lại hỏi câu hỏi chờ xác nhận thụ động.
 3. **Bảo vệ Lịch trình Bất tử & Đối soát sau Khởi động lại (Sidecar Auto-Resurrect & Reconciliation)**:
-   - Plugin đi kèm Sidecar Daemon `bhit-autonomy-plugin/autonomy-engine` (`restart_policy: "always"`) tự động giám sát `STATE.md` và đánh thức Agent ngay cả khi Antigravity bị tắt đột ngột và mở lại.
-   - Tại mỗi nhịp thức dậy hoặc khi nhận tín hiệu từ Sidecar Daemon, Agent **phải** gọi `manage_task(Action: "list")` để kiểm tra các `TaskId` đang sống trong RAM. Nếu các `TaskId` ghi trong `STATE.md` không còn tồn tại (do Antigravity vừa khởi động lại), Agent phải thực thi bù ngay các `Open Loops` / `Timer` đã quá hạn và đặt lại `schedule` mới để cập nhật `TaskId` sống vào `STATE.md`.
+   - Plugin đi kèm Sidecar Daemon `bhit-autonomy-plugin/autonomy-engine` (`restart_policy: "always"`) tự động giám sát `STATE.md` và **chỉ gửi tín hiệu đánh thức vào đúng `Orchestrator Conversation ID` ghi trong `STATE.md`** (nếu trống hoặc phiên đó đã bị xóa, Sidecar tự tạo Conversation mới và cập nhật ID mới vào `STATE.md`).
+   - Tại mỗi nhịp thức dậy của phiên Orchestrator hoặc khi nhận tín hiệu từ Sidecar Daemon, Agent **phải** gọi `manage_task(Action: "list")` để kiểm tra các `TaskId` đang sống trong RAM. Nếu các `TaskId` ghi trong `STATE.md` không còn tồn tại (do Antigravity vừa khởi động lại), Agent phải thực thi bù ngay các `Open Loops` / `Timer` đã quá hạn và đặt lại `schedule` mới để cập nhật `TaskId` sống vào `STATE.md`.
    - Hiển thị nút mở bảng điều khiển trực quan ở cuối phản hồi khi làm việc trong dự án tự chủ: `[⚡ Mở BHIT Autonomy Engine](sidecar://bhit-autonomy-plugin/autonomy-engine/)`.
 
 ---
 
-## 3. Mở Rộng Kỹ Năng: Proposal-First & Non-Blocking
+## 3. Tự Chủ Kỹ Năng & Cơ Chế Escalation Qua `INBOX.md`
 
-Khi thiếu kỹ năng trong `.agents/skills/` để khép kín vòng lặp thực thi:
-1. Không sử dụng `ask_question` trong luồng tự chủ.
-2. Ghi đề xuất kỹ năng mới (mã `#INBOX-YYYYMMDD-XX`, lý do, đầu vào/đầu ra) vào `.agents/cognition/INBOX.md`.
-3. Chạy script phát thông báo Windows Toast:
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File "$HOME/.gemini/config/plugins/bhit-autonomy-plugin/skills/bh-autonomous-agent/scripts/notify-inbox.ps1" -Title "Agent INBOX" -Message "Đề xuất mới trong INBOX.md cần phê duyệt."
-   ```
-4. Chỉ triển khai lập trình Skill vào `.agents/skills/<tên-skill>/` sau khi đề xuất được phê duyệt.
+1. **Tự giải quyết & Tự đúc kết bằng công cụ sẵn có (Self-Sufficiency First)**:
+   - Khi cần thực hiện tác vụ hướng tới `Goals` trong `SOUL.md` mà chưa có sẵn kỹ năng trong `.agents/skills/`, nếu các công cụ bổ trợ hiện có (MCP tools, CLI có sẵn, database queries, browser, APIs đã cấp quyền...) **đủ khả năng thực thi**:
+     a. Subagent `autonomous-worker` chủ động phối hợp công cụ có sẵn để giải quyết tác vụ và gửi kèm **`[Procedural Signal]`** (chuỗi bước thành công & điểm nghẽn đã vượt qua) về `STATE.md` (`Daily Signals`).
+     b. Nếu đang dùng một `SKILL.md` có sẵn mà bước thực thi thay đổi, `autonomous-worker` cập nhật bước đó kèm nhãn `> 🔄 [PROBATION 1/3 | Fallback cũ: ...]` để các lần chạy sau kiểm chứng hoặc rollback nếu lỗi chỉ mang tính cá biệt. Khi đạt `3/3` lần thành công liên tiếp, xóa bỏ dòng `PROBATION` để cách mới trở thành quy trình chuẩn tuyệt đối.
+     c. Cuối chu kỳ, Subagent `cognitive-dreamer` tự động kết tinh các `[Procedural Signal]` lặp lại thành `.agents/skills/<domain>-<op>/SKILL.md` mà **không** cần chờ duyệt qua `INBOX.md`.
+2. **Khi nào đưa vào `INBOX.md` (Capability Boundary & Non-Blocking Escalation)**:
+   - Chỉ đẩy vào `.agents/cognition/INBOX.md` khi Agent cần một kỹ năng/khả năng để đạt `Goal` nhưng **không thể tự thực hiện hoặc không thể tự tạo ra** vì thiếu công cụ bổ trợ hoặc quyền hạn (ví dụ: thiếu MCP server, thiếu CLI/thư viện nền tảng không tự cài được, thiếu API key/credentials, thiếu quyền truy cập hệ thống, hoặc cần quyết định vượt ranh giới `SOUL.md`):
+     a. Không sử dụng `ask_question` trong luồng tự chủ.
+     b. Ghi đề xuất/yêu cầu cấp công cụ (mã `#INBOX-YYYYMMDD-XX`, lý do nghẽn, công cụ/quyền hạn cần bổ sung) vào `.agents/cognition/INBOX.md`.
+     c. Chạy script phát thông báo Windows Toast:
+        ```powershell
+        powershell -ExecutionPolicy Bypass -File "$HOME/.gemini/config/plugins/bhit-autonomy-plugin/skills/bh-autonomous-agent/scripts/notify-inbox.ps1" -Title "Agent INBOX" -Message "Đề xuất mới trong INBOX.md cần phê duyệt."
+        ```
 
 ---
 
@@ -69,7 +80,11 @@ Khi thiếu kỹ năng trong `.agents/skills/` để khép kín vòng lặp th�
 
 ## 5. Chu Trình Hợp Nhất Ký Ức 3 Pha (`cognitive-dreamer`)
 
-Cuối mỗi ngày, gọi Subagent `cognitive-dreamer` thực hiện:
-1. **Light Sleep**: Thu gom và lọc nhiễu `Daily Signals` từ `STATE.md`.
-2. **REM Sleep**: Đối chiếu với `Candidate Truths` trong `DREAMS.md` để nhận diện quy luật lặp lại.
-3. **Deep Sleep**: Thăng cấp quy luật đạt chuẩn vào `MEMORY.md`, cắt tỉa quy tắc lỗi thời, ghi `Dream Diary` vào `DREAMS.md` và làm sạch `Daily Signals` trong `STATE.md`.
+Cuối mỗi ngày, gọi Subagent `cognitive-dreamer` thực hiện hợp nhất cả **Ký ức Nhận thức (`MEMORY.md`)** lẫn **Ký ức Quy trình (`.agents/skills/`)**:
+1. **Light Sleep**: Thu gom và lọc nhiễu `Daily Signals` (bao gồm cả tín hiệu nhận thức và `#procedural-signal` / `#skill-patch`) từ `STATE.md`.
+2. **REM Sleep**: Đối chiếu với `Candidate Truths` và `Candidate Procedures` trong `DREAMS.md` để nhận diện quy luật và quy trình lặp lại.
+3. **Deep Sleep**:
+   - Thăng cấp quy luật đạt chuẩn vào `MEMORY.md` và cắt tỉa quy tắc lỗi thời.
+   - Khởi tạo Playbook Skill mới (`.agents/skills/<domain>-<op>/SKILL.md`) cho các quy trình lặp lại đã kiểm chứng.
+   - Hậu kiểm các bản vá `PROBATION` trong `.agents/skills/`: Xóa bỏ hoàn toàn dòng `PROBATION / Fallback cũ` khi cách mới đã được đồng thuận thành công để chống tràn lịch sử (hoặc rollback nếu chỉ là lỗi 1 lần).
+   - Ghi `Dream Diary` vào `DREAMS.md` và làm sạch `Daily Signals` trong `STATE.md`.

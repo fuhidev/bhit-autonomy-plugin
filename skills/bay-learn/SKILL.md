@@ -32,6 +32,7 @@ Tuyệt đối không ghi nội dung tri thức nghiệp vụ vào `AGENTS.md` �
 | **3. Tài nguyên thực thi & Tập dữ liệu** | Cơ sở dữ liệu (`data.db`) + `.agents/cognition/STATE.md` | Quét metadata của tài nguyên, cập nhật vào bảng dữ liệu tương ứng trong `data.db` và ghi nhận đường dẫn tại mục `## 3. Hạ tầng Dữ liệu Dự án` trong `STATE.md`. |
 | **4. Giọng văn & Phong cách giao tiếp** | `.agents/cognition/CHARACTER.md` | Dùng `edit_file` cập nhật bổ sung quy chuẩn giao tiếp theo yêu cầu trực tiếp của Người vận hành. |
 | **5. Mục tiêu cốt lõi & Ranh giới cấm** | `.agents/cognition/SOUL.md` | Dùng `edit_file` cập nhật mục tiêu hoặc ranh giới hoạt động theo chỉ đạo trực tiếp của Người vận hành (cảnh báo nếu mâu thuẫn với mục tiêu hiện hữu). |
+| **6. Quy trình thao tác từng bước (Playbook)** | `.agents/skills/<domain>-<op>/SKILL.md` | Đúc kết chuỗi bước thực thi bằng công cụ sẵn có vào `SKILL.md` theo mẫu `PROCEDURAL_SKILL.template.md` (hoặc cập nhật vào Skill hiện hữu nếu trùng chủ đề). |
 
 ---
 

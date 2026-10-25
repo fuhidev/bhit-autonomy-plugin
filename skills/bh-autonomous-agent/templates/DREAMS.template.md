@@ -1,14 +1,15 @@
-# 🌙 DREAMS.md - SỔ TAY GIẤC MƠ & CHÂN LÝ ỨNG VIÊN
+# 🌙 DREAMS.md - SỔ TAY GIẤC MƠ, CHÂN LÝ & QUY TRÌNH ỨNG VIÊN
 
-> ✏️ **VÙNG ĐỆM KIỂM CHỨNG**: Nơi lưu các Giả thuyết đang theo dõi (*Candidate Truths*) và Nhật ký Hợp nhất Ký ức (*Dream Diary*). Do `cognitive-dreamer` quản lý.
+> ✏️ **VÙNG ĐỆM KIỂM CHỨNG**: Nơi lưu các Giả thuyết nhận thức (*Candidate Truths*), Quy trình thao tác ứng viên (*Candidate Procedures*) và Nhật ký Hợp nhất Ký ức (*Dream Diary*). Do `cognitive-dreamer` quản lý.
 
 ---
 
-## 1. 🔍 CHÂN LÝ ỨNG VIÊN ĐANG THEO DÕI (CANDIDATE TRUTHS)
-*Các quy luật được phát hiện từ pha REM Sleep. Cần đạt Promotion Gate (`hits >= 3` và `confidence >= 0.85`, hoặc đã được phê duyệt) để thăng cấp sang `MEMORY.md`:*
+## 1. 🔍 CHÂN LÝ & QUY TRÌNH ỨNG VIÊN ĐANG THEO DÕI (CANDIDATES)
+*Các quy luật và quy trình được phát hiện từ pha REM Sleep. Cần đạt Promotion Gate (`hits >= 3` và `confidence >= 0.85`, hoặc quy trình cốt lõi đã kiểm chứng) để thăng cấp sang `MEMORY.md` hoặc kết tinh thành `.agents/skills/<domain>-<op>/SKILL.md`:*
 
-### [CT-01] `[Tên giả thuyết / quy luật đang theo dõi]`
-- **Quan sát**: `[Mô tả quy luật phát hiện từ thực tế vận hành]`
+### [CT-01] `[Tên giả thuyết nhận thức / quy trình đang theo dõi]`
+- **Phân loại**: `Declarative (MEMORY.md)` | `Procedural (.agents/skills/)`
+- **Quan sát / Chuỗi bước chuẩn**: `[Mô tả quy luật hoặc chuỗi bước công cụ đã chạy thành công]`
 - **Hits (Số lần lặp lại)**: `1 / 3`
 - **Độ tin cậy (Confidence)**: `0.40`
 - **Trạng thái**: `Candidate`
@@ -20,6 +21,6 @@
 *Nhật ký tổng hợp sau mỗi chu kỳ `cognitive-dreamer`:*
 
 ### Chu kỳ `[YYYY-MM-DD]` - Ca hợp nhất `#01`
-- **Light Sleep**: `[Số lượng tín hiệu đã quét và lọc nhiễu từ STATE.md]`
-- **REM Sleep**: `[Các giả thuyết được khởi tạo hoặc cập nhật]`
-- **Deep Sleep**: `[Các quy tắc được thăng cấp lên MEMORY.md và trạng thái làm sạch STATE.md]`
+- **Light Sleep**: `[Số lượng tín hiệu nhận thức & quy trình đã quét từ STATE.md]`
+- **REM Sleep**: `[Các Candidate Truths & Candidate Procedures được khởi tạo hoặc cập nhật]`
+- **Deep Sleep**: `[Các quy tắc lên MEMORY.md, các Playbook Skill mới được tạo hoặc dọn sạch PROBATION trong .agents/skills/, và trạng thái làm sạch STATE.md]`

@@ -120,8 +120,88 @@ function uriToPath(uri) {
 }
 
 /**
+ * Extracts the pinned Orchestrator Conversation ID from `.agents/cognition/STATE.md`.
+ * Sidecar strictly uses this ID from STATE.md as the single source of truth.
+ */
+function parseOrchestratorConversationId(stateRaw) {
+  if (!stateRaw) return '';
+  const uuidRegex = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
+  for (const line of stateRaw.split('\n')) {
+    if (/Orchestrator\s+Conversation(?:\s+ID)?|Conversation\s+ID\s+điều\s+phối/i.test(line)) {
+      const m = line.match(uuidRegex);
+      if (m) return m[1].toLowerCase();
+    }
+  }
+  return '';
+}
+
+/**
+ * Writes or updates the `Orchestrator Conversation ID` directly inside `.agents/cognition/STATE.md`.
+ */
+function writeOrchestratorConversationIdToState(workspacePath, convId) {
+  if (!workspacePath || !convId) return false;
+  const statePath = join(workspacePath, '.agents', 'cognition', 'STATE.md');
+  if (!existsSync(statePath)) return false;
+
+  let content = readFileSync(statePath, 'utf-8');
+  const bulletRegex = /(^\s*-\s*\*\*Orchestrator Conversation(?:\s+ID)?\*\*:\s*)(.*)$/im;
+  const tableRegex = /(\|\s*\*\*Orchestrator Conversation(?:\s+ID)?\*\*\s*\|\s*)([^|]+)(\|)/im;
+
+  if (bulletRegex.test(content)) {
+    content = content.replace(bulletRegex, `$1\`${convId}\``);
+  } else if (tableRegex.test(content)) {
+    content = content.replace(tableRegex, `$1\`${convId}\` $3`);
+  } else if (/##\s*4\.[^\n]*\r?\n/i.test(content)) {
+    content = content.replace(/(##\s*4\.[^\n]*\r?\n)/i, `$1- **Orchestrator Conversation ID**: \`${convId}\`\n`);
+  } else {
+    content += `\n- **Orchestrator Conversation ID**: \`${convId}\`\n`;
+  }
+
+  writeFileSync(statePath, content, 'utf-8');
+  return true;
+}
+
+/**
+ * Checks whether a specific conversationId exists and is not killed in `conversation_summaries.db`.
+ */
+function getConversationById(conversationId) {
+  if (!conversationId) return { exists: false, killed: false, row: null };
+  const convDbPath = join(homedir(), '.gemini', 'antigravity', 'conversation_summaries.db');
+  if (!existsSync(convDbPath)) {
+    return { exists: true, killed: false, row: null };
+  }
+
+  let convDb;
+  try {
+    convDb = new DatabaseSync(convDbPath, { readOnly: true });
+    const row = convDb
+      .prepare(
+        `SELECT conversation_id, title, preview, last_modified_time, project_id, status, killed
+         FROM conversation_summaries
+         WHERE conversation_id = ?`
+      )
+      .get(conversationId);
+    if (!row) {
+      return { exists: false, killed: false, row: null };
+    }
+    return {
+      exists: Number(row.killed) === 0,
+      killed: Number(row.killed) !== 0,
+      row,
+    };
+  } catch (err) {
+    console.error('[autonomy-engine] Error checking conversation_id in DB:', err.message);
+    return { exists: true, killed: false, row: null };
+  } finally {
+    try {
+      convDb?.close();
+    } catch {}
+  }
+}
+
+/**
  * Looks up the latest active top-level conversationId for a projectId or workspacePath
- * from Antigravity's conversation_summaries.db
+ * from Antigravity's conversation_summaries.db (used ONLY to resolve projectId or capture newly created conversationId)
  */
 function findLatestConversation(projectId, workspacePath) {
   const convDbPath = join(homedir(), '.gemini', 'antigravity', 'conversation_summaries.db');
@@ -243,27 +323,49 @@ function discoverAutonomousProjects(extraWorkspaceUris = []) {
     }
   }
 
-  // 4. Enrich with latest conversationId and upsert into DB
+  // 4. Resolve Orchestrator Conversation ID strictly from STATE.md and upsert into DB
   const upsertStmt = db.prepare(`
     INSERT INTO projects (workspace_path, project_id, name, active_conversation_id, auto_wake, last_checked_at, last_woken_at)
     VALUES (?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(workspace_path) DO UPDATE SET
       project_id = CASE WHEN excluded.project_id != '' THEN excluded.project_id ELSE projects.project_id END,
       name = CASE WHEN excluded.name != '' THEN excluded.name ELSE projects.name END,
-      active_conversation_id = CASE WHEN excluded.active_conversation_id != '' THEN excluded.active_conversation_id ELSE projects.active_conversation_id END
+      active_conversation_id = excluded.active_conversation_id
   `);
 
   const result = [];
   for (const proj of discovered.values()) {
-    const latestConv = findLatestConversation(proj.project_id, proj.workspace_path);
-    if (latestConv?.conversation_id) {
-      proj.active_conversation_id = latestConv.conversation_id;
-      proj.conversation_title = latestConv.preview || latestConv.title || '';
-      proj.conversation_status = latestConv.status || '';
-      if (!proj.project_id && latestConv.project_id) {
-        proj.project_id = latestConv.project_id;
+    const statePath = join(proj.workspace_path, '.agents', 'cognition', 'STATE.md');
+    const stateRaw = existsSync(statePath) ? readFileSync(statePath, 'utf-8') : '';
+    const stateConvId = parseOrchestratorConversationId(stateRaw);
+
+    if (!proj.project_id) {
+      const latestForPid = findLatestConversation('', proj.workspace_path);
+      if (latestForPid?.project_id) {
+        proj.project_id = latestForPid.project_id;
       }
     }
+
+    if (stateConvId) {
+      const check = getConversationById(stateConvId);
+      if (check.exists && !check.killed) {
+        proj.active_conversation_id = stateConvId;
+        proj.conversation_title = check.row?.preview || check.row?.title || '';
+        proj.conversation_status = 'PINNED_STATE';
+        if (!proj.project_id && check.row?.project_id) {
+          proj.project_id = check.row.project_id;
+        }
+      } else {
+        proj.active_conversation_id = '';
+        proj.conversation_title = '';
+        proj.conversation_status = 'DELETED_IN_STATE';
+      }
+    } else {
+      proj.active_conversation_id = '';
+      proj.conversation_title = '';
+      proj.conversation_status = 'EMPTY_IN_STATE';
+    }
+
     upsertStmt.run(
       proj.workspace_path,
       proj.project_id || '',
@@ -328,9 +430,10 @@ function parseProjectCognition(workspacePath) {
         let status = done ? 'DONE' : 'UPCOMING';
         let diffMinutes = null;
         if (dt) {
-          diffMinutes = Math.round((dt.getTime() - now.getTime()) / 60000);
+          const diffMs = dt.getTime() - now.getTime();
+          diffMinutes = Math.ceil(diffMs / 60000);
           if (!done) {
-            if (diffMinutes <= 0) status = 'OVERDUE';
+            if (diffMs <= 0) status = 'OVERDUE';
             else if (diffMinutes <= 30) status = 'DUE_SOON';
           }
         }
@@ -371,13 +474,14 @@ function parseProjectCognition(workspacePath) {
     if (timerBullet) {
       const timeStr = timerBullet[1].trim();
       const dt = parseLocalTimestamp(timeStr);
-      const diffMinutes = dt ? Math.round((dt.getTime() - now.getTime()) / 60000) : null;
+      const diffMs = dt ? dt.getTime() - now.getTime() : null;
+      const diffMinutes = diffMs !== null ? Math.ceil(diffMs / 60000) : null;
       schedules.push({
         type: 'TIMER',
         expression: timeStr,
         taskId: timerBullet[2] || 'N/A',
         task: plannedTaskBullet ? plannedTaskBullet[1].trim() : 'Thực thi tác vụ kế tiếp trong STATE.md',
-        status: diffMinutes !== null && diffMinutes <= 0 ? 'OVERDUE' : 'ACTIVE',
+        status: diffMs !== null && diffMs <= 0 ? 'OVERDUE' : 'ACTIVE',
         diffMinutes,
       });
     }
@@ -391,19 +495,21 @@ function parseProjectCognition(workspacePath) {
         .filter(Boolean);
       if (cols.length >= 4) {
         const rawType = cols[0].replace(/\*/g, '');
+        if (/Orchestrator\s+Conversation/i.test(rawType)) continue;
         const taskId = cols[1].replace(/`/g, '');
         const expr = cols[2].replace(/`/g, '');
         const taskDesc = cols[3].replace(/`/g, '');
         if (expr.includes('[YYYY')) continue;
         const isCron = rawType.toLowerCase().includes('cron');
         const dt = !isCron ? parseLocalTimestamp(expr) : null;
-        const diffMinutes = dt ? Math.round((dt.getTime() - now.getTime()) / 60000) : null;
+        const diffMs = dt ? dt.getTime() - now.getTime() : null;
+        const diffMinutes = diffMs !== null ? Math.ceil(diffMs / 60000) : null;
         schedules.push({
           type: isCron ? 'CRON' : 'TIMER',
           expression: expr,
           taskId,
           task: taskDesc,
-          status: diffMinutes !== null && diffMinutes <= 0 ? 'OVERDUE' : 'ACTIVE',
+          status: diffMs !== null && diffMs <= 0 ? 'OVERDUE' : 'ACTIVE',
           diffMinutes,
         });
       }
@@ -543,20 +649,26 @@ function getCronCurrentSlot(cronExpr, now = new Date()) {
 const app = new SidecarApp();
 
 /**
- * Sends a wakeup message to the project's active conversation (or creates one)
- * and logs it in `execution_logs`.
+ * Sends a wakeup message strictly to the project's `Orchestrator Conversation ID` in `STATE.md`.
+ * If `STATE.md` is empty or the conversation was deleted, creates a new conversation and writes its ID into `STATE.md`.
  */
-function triggerProjectWakeup(proj, { taskKey, taskType, scheduledFor, prompt }) {
+function triggerProjectWakeup(proj, { taskKey, extraTaskKeys = [], taskType, scheduledFor, prompt }) {
   const existing = db.prepare('SELECT id FROM execution_logs WHERE task_key = ?').get(taskKey);
   if (existing) {
     return { skipped: true, reason: 'Already triggered for this slot' };
   }
 
   const nowStr = formatLocalTime();
-  let convId = proj.active_conversation_id;
-  if (!convId) {
-    const latest = findLatestConversation(proj.project_id, proj.workspace_path);
-    if (latest?.conversation_id) convId = latest.conversation_id;
+  const statePath = join(proj.workspace_path, '.agents', 'cognition', 'STATE.md');
+  const stateRaw = existsSync(statePath) ? readFileSync(statePath, 'utf-8') : '';
+  const stateConvId = parseOrchestratorConversationId(stateRaw);
+
+  let convId = '';
+  if (stateConvId) {
+    const check = getConversationById(stateConvId);
+    if (check.exists && !check.killed) {
+      convId = stateConvId;
+    }
   }
 
   try {
@@ -565,12 +677,62 @@ function triggerProjectWakeup(proj, { taskKey, taskType, scheduledFor, prompt })
       apiRes = app.sendMessage(convId, prompt, { projectId: proj.project_id || undefined });
     } else {
       apiRes = app.startConversation(prompt, { projectId: proj.project_id || undefined });
+      let newConvId =
+        apiRes?.conversationId ||
+        apiRes?.conversation_id ||
+        apiRes?.response?.conversationId ||
+        apiRes?.response?.conversation_id ||
+        apiRes?.response?.newConversation?.conversationId ||
+        apiRes?.response?.startConversation?.conversationId ||
+        '';
+      if (!newConvId) {
+        const rawMatches = JSON.stringify(apiRes || {}).match(
+          /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi
+        );
+        if (rawMatches) {
+          const found = rawMatches.find((id) => id.toLowerCase() !== (proj.project_id || '').toLowerCase());
+          if (found) newConvId = found.toLowerCase();
+        }
+      }
+      if (!newConvId) {
+        const latest = findLatestConversation(proj.project_id, proj.workspace_path);
+        if (latest?.conversation_id) newConvId = latest.conversation_id;
+      }
+      if (newConvId) {
+        convId = newConvId;
+        writeOrchestratorConversationIdToState(proj.workspace_path, newConvId);
+        proj.active_conversation_id = newConvId;
+        db.prepare('UPDATE projects SET active_conversation_id = ? WHERE workspace_path = ?').run(
+          newConvId,
+          proj.workspace_path
+        );
+      }
     }
 
-    db.prepare(`
-      INSERT INTO execution_logs (workspace_path, task_key, task_type, scheduled_for, triggered_at, conversation_id, status, message)
+    const logStmt = db.prepare(`
+      INSERT OR IGNORE INTO execution_logs (workspace_path, task_key, task_type, scheduled_for, triggered_at, conversation_id, status, message)
       VALUES (?, ?, ?, ?, ?, ?, 'SUCCESS', ?)
-    `).run(proj.workspace_path, taskKey, taskType, scheduledFor, nowStr, convId || 'new-conversation', prompt.slice(0, 300));
+    `);
+    logStmt.run(
+      proj.workspace_path,
+      taskKey,
+      taskType,
+      scheduledFor,
+      nowStr,
+      convId || 'new-conversation',
+      prompt.slice(0, 300)
+    );
+    for (const extraKey of extraTaskKeys) {
+      logStmt.run(
+        proj.workspace_path,
+        extraKey,
+        taskType,
+        scheduledFor,
+        nowStr,
+        convId || 'new-conversation',
+        prompt.slice(0, 300)
+      );
+    }
 
     db.prepare('UPDATE projects SET last_woken_at = ?, last_checked_at = ? WHERE workspace_path = ?').run(
       nowStr,
@@ -582,7 +744,7 @@ function triggerProjectWakeup(proj, { taskKey, taskType, scheduledFor, prompt })
     return { ok: true, conversationId: convId, apiRes };
   } catch (err) {
     db.prepare(`
-      INSERT INTO execution_logs (workspace_path, task_key, task_type, scheduled_for, triggered_at, conversation_id, status, message)
+      INSERT OR IGNORE INTO execution_logs (workspace_path, task_key, task_type, scheduled_for, triggered_at, conversation_id, status, message)
       VALUES (?, ?, ?, ?, ?, ?, 'ERROR', ?)
     `).run(proj.workspace_path, taskKey, taskType, scheduledFor, nowStr, convId || '', err.message);
     console.error(`[autonomy-engine] Failed waking ${proj.name}:`, err.message);
@@ -609,45 +771,59 @@ function runSchedulerTick() {
 
       const cog = parseProjectCognition(proj.workspace_path);
 
-      // 1. Check overdue One-shot Timers in STATE.md Section 4
+      // 1 & 2. Collect and coalesce all due/overdue STATE.md Timers (Section 4) and Open Loops (Section 2)
+      const dueStateItems = [];
       for (const sched of cog.schedules) {
         if (sched.type === 'TIMER' && sched.status === 'OVERDUE') {
           const taskKey = `${proj.workspace_path}::timer::${sched.expression}`;
-          const prompt =
-            `⚡ [BHIT AUTONOMY ENGINE - AUTO WAKEUP]\n` +
-            `Thời điểm hiện tại: ${nowStr}\n` +
-            `One-shot Timer trong STATE.md đã đến hạn: \`${sched.expression}\` (TaskId cũ: \`${sched.taskId}\`).\n` +
-            `Nhiệm vụ dự kiến: ${sched.task}\n\n` +
-            `Hãy thực hiện quy trình OODA Loop:\n` +
-            `1. Đọc \`.agents/cognition/STATE.md\` và \`.agents/cognition/INBOX.md\`.\n` +
-            `2. Gọi \`manage_task(Action: "list")\` để kiểm tra và đồng bộ lại lịch \`/schedule\` nếu phiên vừa khởi động lại.\n` +
-            `3. Thực thi nhiệm vụ đến hạn, cập nhật kết quả vào \`STATE.md\` và đặt Timer cho mốc tiếp theo.`;
-          triggerProjectWakeup(proj, {
-            taskKey,
-            taskType: 'STATE_TIMER',
-            scheduledFor: sched.expression,
-            prompt,
-          });
+          const alreadyRun = db.prepare('SELECT id FROM execution_logs WHERE task_key = ?').get(taskKey);
+          if (!alreadyRun) {
+            dueStateItems.push({
+              taskKey,
+              taskType: 'STATE_TIMER',
+              scheduledFor: sched.expression,
+              line: `- [One-shot Timer] \`${sched.expression}\` (TaskId: \`${sched.taskId}\`): ${sched.task}`,
+            });
+          }
         }
       }
 
-      // 2. Check overdue Open Loops in STATE.md Section 2
       for (const loop of cog.openLoops) {
         if (!loop.done && loop.status === 'OVERDUE') {
           const taskKey = `${proj.workspace_path}::openloop::${loop.timeStr}`;
-          const prompt =
-            `⚡ [BHIT AUTONOMY ENGINE - OPEN LOOP WAKEUP]\n` +
-            `Thời điểm hiện tại: ${nowStr}\n` +
-            `Phát hiện Open Loop đến hạn/quá hạn trong STATE.md:\n` +
-            `- [ ] \`${loop.timeStr}\` - ${loop.description}\n\n` +
-            `Hãy đọc \`STATE.md\`, kiểm tra \`manage_task(Action: "list")\` để khôi phục lịch trình nếu cần, thực thi ngay Open Loop này, đánh dấu \`[x]\` khi hoàn thành và cập nhật \`STATE.md\`!`;
-          triggerProjectWakeup(proj, {
-            taskKey,
-            taskType: 'OPEN_LOOP',
-            scheduledFor: loop.timeStr,
-            prompt,
-          });
+          const alreadyRun = db.prepare('SELECT id FROM execution_logs WHERE task_key = ?').get(taskKey);
+          if (!alreadyRun) {
+            dueStateItems.push({
+              taskKey,
+              taskType: 'OPEN_LOOP',
+              scheduledFor: loop.timeStr,
+              line: `- [Open Loop] [ ] \`${loop.timeStr}\` - ${loop.description}`,
+            });
+          }
         }
+      }
+
+      if (dueStateItems.length > 0) {
+        const primary = dueStateItems[0];
+        const extraTaskKeys = dueStateItems.slice(1).map((item) => item.taskKey);
+        const taskType = dueStateItems.length > 1 ? 'STATE_WAKEUP' : primary.taskType;
+        const prompt =
+          `⚡ [BHIT AUTONOMY ENGINE - AUTO WAKEUP]\n` +
+          `Thời điểm hiện tại: ${nowStr}\n` +
+          `Phát hiện lịch trình / vòng lặp đến hạn trong STATE.md:\n` +
+          `${dueStateItems.map((i) => i.line).join('\n')}\n\n` +
+          `Hãy thực hiện quy trình OODA Loop:\n` +
+          `1. Đọc \`.agents/cognition/STATE.md\` và \`.agents/cognition/INBOX.md\`.\n` +
+          `2. Gọi \`manage_task(Action: "list")\` để kiểm tra và đồng bộ lại lịch \`/schedule\` nếu phiên vừa khởi động lại.\n` +
+          `3. Thực thi ngay nhiệm vụ đến hạn, đánh dấu \`[x]\` cho Open Loop khi hoàn thành, cập nhật kết quả vào \`STATE.md\` và đặt Timer cho mốc tiếp theo.`;
+
+        triggerProjectWakeup(proj, {
+          taskKey: primary.taskKey,
+          extraTaskKeys,
+          taskType,
+          scheduledFor: primary.scheduledFor,
+          prompt,
+        });
       }
 
       // 3. Check custom persistent schedules in autonomy_engine.db

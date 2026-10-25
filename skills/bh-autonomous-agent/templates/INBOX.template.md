@@ -1,20 +1,18 @@
-# 📬 INBOX.md - HỘP THƯ ĐÀM PHÁN KỸ NĂNG & PHÊ DUYỆT (NON-BLOCKING)
+# 📬 INBOX.md - HỘP THƯ ESCALATION NĂNG LỰC & PHÊ DUYỆT CHIẾN LƯỢC (NON-BLOCKING)
 
-> 🔔 **NON-BLOCKING**: Mọi đề xuất kỹ năng mới hoặc câu hỏi chiến lược đều được ghi vào đây kèm phát Windows Toast Notification. Người vận hành phê duyệt bằng cách cập nhật trạng thái trong tệp này hoặc phản hồi trên khung chat.
+> 🔔 **NON-BLOCKING ESCALATION**: Chỉ ghi vào đây khi Agent cần đạt `Goal` nhưng **vượt quá khả năng tự thực hiện bằng các công cụ sẵn có** (thiếu MCP server, thiếu CLI/thư viện nền tảng, thiếu API key/quyền truy cập) hoặc cần quyết định chiến lược chạm ranh giới `SOUL.md`. Mọi mục mới đều phát Windows Toast Notification.
 
 ---
 
-## 1. ⏳ ĐỀ XUẤT ĐANG CHỜ DUYỆT (PENDING PROPOSALS)
+## 1. ⏳ YÊU CẦU CẤP CÔNG CỤ / PHÊ DUYỆT ĐANG CHỜ (PENDING ESCALATIONS)
 
-### [#INBOX-YYYYMMDD-01] Đề xuất kỹ năng: `[TÊN_SKILL_ĐỀ_XUẤT]`
+### [#INBOX-YYYYMMDD-01] Yêu cầu bổ sung năng lực: `[TÊN_CÔNG_CỤ_HOẶC_QUYỀN_CẦN_CẤP]`
 - **Thời gian tạo**: `[YYYY-MM-DD HH:MM:SS]`
-- **Lý do cần thiết**: `[Mô tả khoảng trống công cụ hiện tại]`
 - **Mục tiêu liên quan**: `Goal #[SỐ_GOAL]` trong `SOUL.md`
-- **Đặc tả kỹ năng dự kiến**:
-  - Đường dẫn: `.agents/skills/[tên-skill]/`
-  - Đầu vào (Input): `[Tham số đầu vào]`
-  - Đầu ra (Output): `[Kết quả trả về]`
-  - Cơ chế kiểm chứng: `[Cách xác nhận thực thi thành công]`
+- **Điểm nghẽn công cụ / quyền hạn (`Capability Blocker`)**: `[Mô tả rõ tại sao các công cụ MCP, CLI, DB, Browser, API hiện có không thể tự giải quyết được]`
+- **Đề xuất hỗ trợ từ Người vận hành**:
+  - Công cụ / Quyền cần cấp: `[Ví dụ: Cấp API Key X, cài đặt MCP Y, hoặc phê duyệt quyền truy cập Z]`
+  - Kết quả kỳ vọng sau khi được cấp: `[Khả năng mới sẽ được mở khóa cho Agent]`
 - **Trạng thái**: `PENDING` *(Cập nhật thành `APPROVED` hoặc `REJECTED`)*
 
 ---

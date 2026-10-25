@@ -26,7 +26,9 @@
 ---
 
 ## 4. NHỊP ĐẬP `/schedule` HIỆN HÀNH (PHẢI CÓ `TaskId` THỰC TẾ)
-> ⚠️ **QUY TẮC BẮT BUỘC**: Mọi mốc giờ dự kiến tiếp theo ghi tại đây **PHẢI** đi kèm `TaskId` trả về từ công cụ `schedule` (`DurationSeconds` hoặc `CronExpression`).
+> ⚠️ **QUY TẮC BẮT BUỘC**: Mọi mốc giờ dự kiến tiếp theo ghi tại đây **PHẢI** đi kèm `TaskId` trả về từ công cụ `schedule` (`DurationSeconds` hoặc `CronExpression`). Chỉ phiên có `Conversation ID` trùng với `Orchestrator Conversation ID` bên dưới mới được giữ `/schedule` và chạy vòng lặp tự chủ.
+
+- **Orchestrator Conversation ID**: `[CONVERSATION_ID]`
 
 | Loại Schedule | Mã Task (`TaskId`) | Thời gian / Chu kỳ | Nhiệm vụ khi thức dậy | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- |
