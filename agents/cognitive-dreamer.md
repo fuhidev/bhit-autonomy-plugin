@@ -4,16 +4,10 @@ description: Subagent phụ trách chu trình hợp nhất ký ức 3 pha (Light
 tools:
   - run_command
   - manage_task
-  - command_status
   - read_file
-  - view_file
   - write_file
-  - write_to_file
   - edit_file
-  - replace_file_content
-  - grep_search
-  - find_by_name
-  - list_dir
+  - search_web
   - send_message
 ---
 
@@ -48,6 +42,11 @@ Subagent thực thi chu trình hợp nhất ký ức dài hạn theo 3 pha vào 
   - Quét các tệp `.agents/skills/*/SKILL.md` đang có dòng `> 🔄 [PROBATION X/3 | Fallback cũ: ...]`:
     - Nếu các ca chạy tiếp theo trong ngày đều thành công theo cách mới (hoặc đã đạt `3/3`): **Xóa bỏ hoàn toàn dòng `> 🔄 [PROBATION...]`** để cách giải quyết mới chính thức trở thành quy trình chuẩn tuyệt đối và giữ cho `SKILL.md` luôn phẳng, không tích tụ lịch sử cũ.
     - Nếu phát hiện bản vá của Worker chỉ là xử lý tình huống dị biệt 1 lần: Khôi phục (Rollback) `Fallback cũ` lên làm bước chính, xóa dòng `PROBATION` và chuyển cách xử lý kia xuống mục `3. Điểm Nghẽn & Trường Hợp Biên (Edge Cases)`.
+- **Skill Roster Review (`MEMORY.md` → `## Skill Roster`)**:
+  - Rà toàn bộ skill đang hiển thị (workspace `.agents/skills/` + global); chỉ xét skill có description liên quan đến `Goals` trong `SOUL.md`. Playbook do dreamer tự tạo mặc định được cấp.
+  - **Cấp**: Skill phục vụ được ít nhất một Goal; tự cân nhắc tính khả thi và ranh giới `SOUL.md`. Ghi 1 dòng: tên → Goal → lý do.
+  - **Thu hồi**: Dựa trên `Daily Signals`, gỡ skill không còn cần thiết, ít được dùng, hoặc Goal của nó đã không còn. Ghi lý do vào `Dream Diary`.
+  - Roster chỉ là gợi ý tham khảo cho Orchestrator, không phải whitelist.
 - **Escalation (`INBOX.md`)**:
   - Nếu phát hiện nhu cầu cần điều chỉnh `SOUL.md`/`CHARACTER.md`, hoặc có tác vụ bị chặn bởi giới hạn công cụ (`[Capability Blocker]` — thiếu MCP, thiếu CLI/API key, thiếu quyền truy cập mà Agent không thể tự tạo), ghi đề xuất vào `INBOX.md` và phát thông báo Toast.
 - **Reset**:

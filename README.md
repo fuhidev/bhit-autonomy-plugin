@@ -6,24 +6,29 @@ Hệ điều hành AI Agent tự chủ vận hành 24/7 trực tiếp trên Goog
 
 ## 🌟 TÍNH NĂNG CỐT LÕI
 
-1. **Kiến Trúc Nhận Thức Phân Tầng (`.agents/cognition/`)**:
+1. **Phỏng Vấn Định Hình Hồ Sơ Agent 4 Bước (`bay:init` / `bay:onboard` — OpenClaw-style Onboarding)**:
+   - Tự động quét ngữ cảnh dự án, thông tin doanh nghiệp và danh sách MCP/Skills trên máy trước khi hỏi.
+   - Thực thi nghiêm ngặt 4 bước phỏng vấn qua công cụ tương tác `ask_question` với gợi ý `(Recommended)` được cá nhân hóa kết hợp 4 nhóm Archetype phi lập trình chuẩn (Marketing/Nội dung, Sales B2B/CSKH, Nghiên cứu Thị trường/Tin tức, Trợ lý Điều hành/Hành chính).
+   - Tự động cập nhật `SOUL.md` (kể cả mục **Khả năng & Quyền hạn Công cụ**) và `CHARACTER.md`, tự cài thêm skill qua `aas-skill-fetcher` hoặc đẩy yêu cầu công cụ thiếu vào `INBOX.md`, và kích hoạt ngay lịch trình `/schedule` sau Bước 4 mà không cần hỏi xác nhận thừa.
+
+2. **Kiến Trúc Nhận Thức Phân Tầng (`.agents/cognition/`)**:
    - `AGENTS.md` tại gốc dự án đóng vai trò là Router mỏng, chỉ nạp tự động `@[SOUL](.agents/cognition/SOUL.md)`.
    - Các tệp `CHARACTER.md`, `STATE.md`, `DREAMS.md`, `MEMORY.md`, `INBOX.md` được truy xuất theo ngữ cảnh (On-Demand).
 
-2. **Quản Trị Quyền Ghi (Write Governance)**:
+3. **Quản Trị Quyền Ghi (Write Governance)**:
    - `SOUL.md` và `CHARACTER.md` ở chế độ Read-Only trong các chu kỳ tự động.
-   - Mọi đề xuất thay đổi mục tiêu hoặc tính cách tự phát đều phải thông qua `INBOX.md`.
+   - Mọi đề xuất thay đổi mục tiêu hoặc tính cách tự phát đều phải thông qua `INBOX.md` (trừ khi Người vận hành chủ động gọi `bay:init`, `bay:onboard` hoặc `bay:learn`).
 
-3. **Mở Rộng Kỹ Năng Proposal-First & Non-Blocking**:
+4. **Mở Rộng Kỹ Năng Proposal-First & Non-Blocking**:
    - Khi thiếu công cụ thực thi, Agent ghi đặc tả đề xuất vào `INBOX.md` và phát thông báo **Windows Toast Notification** (`notify-inbox.ps1`) mà không làm gián đoạn lịch trình `/schedule`.
 
-4. **Hợp Nhất Ký Ức 3 Pha (`cognitive-dreamer`)**:
-   - Xử lý tín hiệu qua 3 pha: Light Sleep (Thu gom & Lọc nhiễu từ `STATE.md`) $\rightarrow$ REM Sleep (Theo dõi giả thuyết tại `DREAMS.md`) $\rightarrow$ Deep Sleep (Thăng cấp quy tắc đạt ngưỡng vào `MEMORY.md` và làm sạch `STATE.md`).
+5. **Hợp Nhất Ký Ức 3 Pha (`cognitive-dreamer`)**:
+   - Xử lý tín hiệu qua 3 pha: Light Sleep (Thu gom & Lọc nhiễu từ `STATE.md`) $\rightarrow$ REM Sleep (Theo dõi giả thuyết tại `DREAMS.md`) $\rightarrow$ Deep Sleep (Thăng cấp quy tắc đạt ngưỡng vào `MEMORY.md`, kết tinh `.agents/skills/*/SKILL.md` và làm sạch `STATE.md`).
 
-5. **Thin Orchestrator & Subagents**:
+6. **Thin Orchestrator & Subagents**:
    - Luồng chính giữ lịch trình `/schedule` gọn nhẹ và ủy quyền tác vụ thực thi cho `autonomous-worker`.
 
-6. **Giao Thức Nạp Tri Thức & Tài Nguyên (`bay:learn`)**:
+7. **Giao Thức Nạp Tri Thức & Tài Nguyên (`bay:learn`)**:
    - Tiếp nhận tri thức từ chỉ đạo trực tiếp, hội thoại tham chiếu (`@[conversation:...]`), tài liệu chuyên môn hoặc tài nguyên vận hành và định tuyến vào đúng tầng nhận thức (`MEMORY.md`, `.agents/knowledge/*.md`, `data.db` + `STATE.md`, `CHARACTER.md`, `SOUL.md`).
 
 ---

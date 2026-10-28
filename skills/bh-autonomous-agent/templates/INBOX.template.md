@@ -1,18 +1,16 @@
-# 📬 INBOX.md - HỘP THƯ ESCALATION NĂNG LỰC & PHÊ DUYỆT CHIẾN LƯỢC (NON-BLOCKING)
+# 📬 INBOX.md - HỘP THƯ TIẾP NHẬN PHÊ DUYỆT & ESCALATION NĂNG LỰC (NON-BLOCKING)
 
-> 🔔 **NON-BLOCKING ESCALATION**: Chỉ ghi vào đây khi Agent cần đạt `Goal` nhưng **vượt quá khả năng tự thực hiện bằng các công cụ sẵn có** (thiếu MCP server, thiếu CLI/thư viện nền tảng, thiếu API key/quyền truy cập) hoặc cần quyết định chiến lược chạm ranh giới `SOUL.md`. Mọi mục mới đều phát Windows Toast Notification.
+> 🔔 **MANDATORY INBOX ESCALATION**: Khi Agent chạy nền cần Người vận hành **phê duyệt bất cứ vấn đề gì** (kế hoạch, hành động nhạy cảm, nội dung xuất bản, cấp công cụ/quyền hạn, định hướng chiến lược), BẮT BUỘC phải đưa vào đây. Nếu cần nội dung chi tiết, Agent tự tạo file nháp trong `.agents/cognition/drafts/` và gắn link markdown vào mục tương ứng. Sau khi được Duyệt hoặc Từ chối, Agent sẽ đọc/xử lý và xóa hoàn toàn file nháp.
 
 ---
 
-## 1. ⏳ YÊU CẦU CẤP CÔNG CỤ / PHÊ DUYỆT ĐANG CHỜ (PENDING ESCALATIONS)
+## 1. ⏳ YÊU CẦU CHỜ PHÊ DUYỆT (PENDING APPROVALS & ESCALATIONS)
 
-### [#INBOX-YYYYMMDD-01] Yêu cầu bổ sung năng lực: `[TÊN_CÔNG_CỤ_HOẶC_QUYỀN_CẦN_CẤP]`
+### [#INBOX-YYYYMMDD-01] Phê duyệt: `[TIÊU_ĐỀ_VẤN_ĐỀ_CẦN_DUYỆT]`
 - **Thời gian tạo**: `[YYYY-MM-DD HH:MM:SS]`
 - **Mục tiêu liên quan**: `Goal #[SỐ_GOAL]` trong `SOUL.md`
-- **Điểm nghẽn công cụ / quyền hạn (`Capability Blocker`)**: `[Mô tả rõ tại sao các công cụ MCP, CLI, DB, Browser, API hiện có không thể tự giải quyết được]`
-- **Đề xuất hỗ trợ từ Người vận hành**:
-  - Công cụ / Quyền cần cấp: `[Ví dụ: Cấp API Key X, cài đặt MCP Y, hoặc phê duyệt quyền truy cập Z]`
-  - Kết quả kỳ vọng sau khi được cấp: `[Khả năng mới sẽ được mở khóa cho Agent]`
+- **Lý do / Nội dung cần duyệt**: `[Tóm tắt ngắn gọn lý do cần người vận hành phê duyệt]`
+- **Tài liệu chi tiết**: [Xem chi tiết bản thảo](file:///[ĐƯỜNG_DẪN_TUYỆT_ĐỐI_ĐẾN_FILE_NHÁP_TRONG_.agents/cognition/drafts/]) *(Tự động xóa sau khi duyệt/từ chối)*
 - **Trạng thái**: `PENDING` *(Cập nhật thành `APPROVED` hoặc `REJECTED`)*
 
 ---

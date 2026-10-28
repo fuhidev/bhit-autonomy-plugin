@@ -11,6 +11,7 @@
  * 5. Serves an interactive Aux Pane & Sidebar Dashboard UI (`ui.html`).
  */
 
+import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -541,14 +542,41 @@ function parseProjectCognition(workspacePath) {
     const title = pm[2].trim();
     const body = pm[3].trim();
     const statusMatch = body.match(/-\s*\*\*Trạng thái\*\*:\s*`?([A-Z_]+)`?/i);
-    const reasonMatch = body.match(/-\s*\*\*Lý do[^*]*\*\*:\s*(.+)/i);
+    const reasonMatch = body.match(/-\s*\*\*(?:Lý do|Nội dung)[^*]*\*\*:\s*(.+)/i);
     const goalMatch = body.match(/-\s*\*\*Mục tiêu[^*]*\*\*:\s*(.+)/i);
+
+    // Parse detail markdown link if available
+    const docMatch =
+      body.match(/-\s*\*\*(?:Tài liệu|Tài liệu chi tiết|Chi tiết)[^*]*\*\*:\s*\[([^\]]+)\]\(([^)]+)\)/i) ||
+      body.match(/\[([^\]]+)\]\((file:\/\/\/[^)]+|\.[^)]+)\)/i);
+    let detailLink = '';
+    let detailTitle = '';
+    let detailPath = '';
+    if (docMatch) {
+      detailTitle = docMatch[1].trim();
+      let rawLink = docMatch[2].trim();
+      if (rawLink.startsWith('file:///')) {
+        detailPath = uriToPath(rawLink);
+        if (existsSync(detailPath)) {
+          detailLink = pathToFileURL(detailPath).href;
+        } else {
+          detailLink = rawLink;
+        }
+      } else {
+        detailPath = resolve(workspacePath, rawLink.replace(/^\.\/?/, ''));
+        detailLink = pathToFileURL(detailPath).href;
+      }
+    }
+
     inboxItems.push({
       id,
       title,
       status: statusMatch ? statusMatch[1].toUpperCase() : 'PENDING',
       reason: reasonMatch ? reasonMatch[1].trim() : '',
       goal: goalMatch ? goalMatch[1].trim() : '',
+      detailLink,
+      detailPath,
+      detailTitle: detailTitle || 'Xem chi tiết',
       rawBody: body,
     });
   }
@@ -991,7 +1019,9 @@ app.api('/api/inbox-decision', (data) => {
       const prompt =
         `📬 [BHIT AUTONOMY ENGINE - INBOX ${decision}]\n` +
         `Người vận hành vừa cập nhật trạng thái đề xuất **${inboxId}** trong \`.agents/cognition/INBOX.md\` thành \`${decision}\`${userNote ? ` với chỉ đạo: "${userNote}"` : ''}.\n` +
-        `Hãy đọc ngay \`.agents/cognition/INBOX.md\` và \`STATE.md\` để thực thi bước tiếp theo theo quyết định này!`;
+        (decision === 'APPROVED'
+          ? `Hãy đọc \`.agents/cognition/INBOX.md\` và đọc file nháp chi tiết (nếu có) trong \`.agents/cognition/drafts/\` để thực thi tác vụ. Sau khi hoàn thành thực thi, hãy XÓA HOÀN TOÀN file nháp và cập nhật \`STATE.md\`!`
+          : `Hãy XÓA HOÀN TOÀN file nháp chi tiết (nếu có) trong \`.agents/cognition/drafts/\`, hủy bỏ tác vụ và tiếp tục lịch trình trong \`STATE.md\`!`);
       wakeResult = triggerProjectWakeup(proj, {
         taskKey: `${proj.workspace_path}::inbox::${inboxId}::${Date.now()}`,
         taskType: `INBOX_${decision}`,
@@ -1043,6 +1073,26 @@ app.api('/api/delete-schedule', (data) => {
   const { id } = data;
   db.prepare('DELETE FROM custom_schedules WHERE id = ?').run(id);
   return { ok: true };
+});
+
+// API: Open File in Antigravity IDE / System Editor as fallback
+app.api('/api/open-file', (data) => {
+  const { fileUri, filePath } = data;
+  let targetPath = filePath || uriToPath(fileUri);
+  if (!targetPath && fileUri?.startsWith('file:///')) {
+    targetPath = decodeURIComponent(fileUri.slice('file:///'.length)).replace(/\//g, '\\');
+  }
+  if (!targetPath || !existsSync(targetPath)) {
+    throw new Error('Không tìm thấy file: ' + (targetPath || fileUri || ''));
+  }
+
+  const ideCmd = 'C:\\Users\\fuhid\\AppData\\Local\\Programs\\Antigravity IDE\\bin\\antigravity-ide.cmd';
+  if (existsSync(ideCmd)) {
+    spawn(ideCmd, ['-r', targetPath], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+  } else {
+    spawn('cmd.exe', ['/c', 'start', '""', targetPath], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+  }
+  return { ok: true, path: targetPath };
 });
 
 // Start HTTP Server & Persistent Background Daemon Loop

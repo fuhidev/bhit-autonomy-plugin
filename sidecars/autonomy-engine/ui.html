@@ -262,6 +262,43 @@
         }
       };
 
+      const handleOpenFile = async (uri, path) => {
+        if (!uri && !path) return;
+        const targetUri = uri || (path ? ('file:///' + path.replace(/\\/g, '/')) : '');
+
+        // 1. Kích hoạt trực tiếp tab 'Open File' (fileView) nguyên bản của Antigravity trên Auxiliary Pane
+        let auxTriggered = false;
+        try {
+          if (window.sidecar?.ui?.toggleAuxPane) {
+            window.sidecar.ui.toggleAuxPane({ tabType: 'fileView', uri: targetUri });
+            auxTriggered = true;
+          }
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: 'toggle-aux-pane',
+              payload: { tabType: 'fileView', uri: targetUri }
+            }, '*');
+            auxTriggered = true;
+          }
+        } catch (err) {
+          console.error('Lỗi khi gửi toggle-aux-pane:', err);
+        }
+
+        if (auxTriggered) {
+          showToast('Đã kích hoạt tab File Viewer trên Antigravity!', 'success');
+        }
+
+        // 2. Dự phòng nếu mở trong tab browser độc lập ngoài Antigravity
+        if (!window.parent || window.parent === window) {
+          try {
+            await apiRequest('/api/open-file', { fileUri: targetUri, filePath: path });
+            showToast('Đã mở file trong trình soạn thảo!', 'success');
+          } catch (err) {
+            showToast(err.message, 'error');
+          }
+        }
+      };
+
       const proj = data?.activeProject;
       const cog = data?.cognition;
       const pendingInboxCount = cog?.inboxItems?.filter(i => i.status === 'PENDING').length || 0;
@@ -679,6 +716,20 @@
                     ${item.goal && html`
                       <div class="text-xs text-slate-400">
                         <strong class="text-slate-200">Mục tiêu: </strong>${item.goal}
+                      </div>
+                    `}
+
+                    ${(item.detailLink || item.detailPath) && html`
+                      <div class="mt-0.5">
+                        <button
+                          type="button"
+                          onClick=${() => handleOpenFile(item.detailLink, item.detailPath)}
+                          class="inline-flex items-center gap-1.5 text-xs text-sky-400 hover:text-sky-300 font-medium underline underline-offset-2 transition-colors py-0.5 cursor-pointer bg-transparent border-0 p-0 text-left group"
+                          title="Kích hoạt tab File Viewer trên Auxiliary Pane của Antigravity"
+                        >
+                          <${Icons.ExternalLink} />
+                          <span class="group-hover:text-sky-200">[${item.detailTitle || 'Xem chi tiết bản thảo'}]</span>
+                        </button>
                       </div>
                     `}
 

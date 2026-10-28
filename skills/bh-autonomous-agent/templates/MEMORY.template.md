@@ -19,3 +19,9 @@
 ## 3. MẪU LỖI CẦN TRÁNH (ANTI-PATTERNS)
 *Những phương thức tiếp cận không hiệu quả hoặc sai lầm kỹ thuật cần tránh lặp lại:*
 - `[ANTI-PATTERN 01]`: `[Mô tả hành vi cần tránh]`
+
+---
+
+## 4. SKILL ROSTER (KỸ NĂNG ĐƯỢC KHUYẾN NGHỊ)
+*Do `cognitive-dreamer` cấp/thu hồi ở Deep Sleep. Chỉ mang tính tham khảo khi lập kế hoạch, không phải whitelist:*
+- `[skill-name]` → Goal: `[Goal phục vụ]` — `[Lý do cấp / ghi chú dùng]` *(Cấp: YYYY-MM-DD)*
