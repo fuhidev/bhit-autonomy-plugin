@@ -41,6 +41,8 @@ mkdirSync(DATA_DIR, { recursive: true });
 
 const ENGINE_DB_PATH = join(DATA_DIR, 'autonomy_engine.db');
 const db = new DatabaseSync(ENGINE_DB_PATH);
+db.exec('PRAGMA busy_timeout = 5000;');
+db.exec('PRAGMA journal_mode = WAL;');
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS projects (
@@ -175,6 +177,7 @@ function getConversationById(conversationId) {
   let convDb;
   try {
     convDb = new DatabaseSync(convDbPath, { readOnly: true });
+    convDb.exec('PRAGMA busy_timeout = 5000;');
     const row = convDb
       .prepare(
         `SELECT conversation_id, title, preview, last_modified_time, project_id, status, killed
@@ -211,6 +214,7 @@ function findLatestConversation(projectId, workspacePath) {
   let convDb;
   try {
     convDb = new DatabaseSync(convDbPath, { readOnly: true });
+    convDb.exec('PRAGMA busy_timeout = 5000;');
     if (projectId) {
       const stmt = convDb.prepare(`
         SELECT conversation_id, title, preview, last_modified_time, status
@@ -422,7 +426,7 @@ function parseProjectCognition(workspacePath) {
   const sec2Match = stateRaw.match(/##\s*2\..*?([\s\S]*?)(?=---|##\s*3\.)/i);
   if (sec2Match) {
     for (const line of sec2Match[1].split('\n')) {
-      const m = line.match(/^\s*-\s*\[([ xX])\]\s*`?(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}(?::\d{2})?)`?\s*-\s*(.+)/);
+      const m = line.match(/^\s*-\s*\[([ xX])\]\s*`?\[?(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}(?::\d{2})?)\]?`?\s*-\s*(.+)/);
       if (m) {
         const done = m[1].toLowerCase() === 'x';
         const timeStr = m[2].trim();
@@ -677,6 +681,17 @@ function getCronCurrentSlot(cronExpr, now = new Date()) {
 const app = new SidecarApp();
 
 /**
+ * Checks if a project was woken recently within thresholdSeconds (to prevent redundant wakeups)
+ */
+function isRecentlyWoken(proj, thresholdSeconds = 180) {
+  if (!proj?.last_woken_at) return false;
+  const dt = parseLocalTimestamp(proj.last_woken_at);
+  if (!dt) return false;
+  const diffSec = (Date.now() - dt.getTime()) / 1000;
+  return diffSec >= 0 && diffSec < thresholdSeconds;
+}
+
+/**
  * Sends a wakeup message strictly to the project's `Orchestrator Conversation ID` in `STATE.md`.
  * If `STATE.md` is empty or the conversation was deleted, creates a new conversation and writes its ID into `STATE.md`.
  */
@@ -799,7 +814,7 @@ function runSchedulerTick() {
 
       const cog = parseProjectCognition(proj.workspace_path);
 
-      // 1 & 2. Collect and coalesce all due/overdue STATE.md Timers (Section 4) and Open Loops (Section 2)
+      // 1 & 2. Collect and coalesce all due/overdue STATE.md Timers, Crons (Section 4) and Open Loops (Section 2)
       const dueStateItems = [];
       for (const sched of cog.schedules) {
         if (sched.type === 'TIMER' && sched.status === 'OVERDUE') {
@@ -812,6 +827,20 @@ function runSchedulerTick() {
               scheduledFor: sched.expression,
               line: `- [One-shot Timer] \`${sched.expression}\` (TaskId: \`${sched.taskId}\`): ${sched.task}`,
             });
+          }
+        } else if (sched.type === 'CRON') {
+          const slot = getCronCurrentSlot(sched.expression, now);
+          if (slot) {
+            const taskKey = `${proj.workspace_path}::cron::${sched.expression}::${slot}`;
+            const alreadyRun = db.prepare('SELECT id FROM execution_logs WHERE task_key = ?').get(taskKey);
+            if (!alreadyRun && !isRecentlyWoken(proj, 180)) {
+              dueStateItems.push({
+                taskKey,
+                taskType: 'STATE_CRON',
+                scheduledFor: slot,
+                line: `- [Cron Nền An Toàn] \`${sched.expression}\` (Slot: \`${slot}\`, TaskId: \`${sched.taskId}\`): ${sched.task}`,
+              });
+            }
           }
         }
       }
@@ -933,6 +962,7 @@ app.api('/api/dashboard', (data) => {
       tickCount,
       serverTime: formatLocalTime(),
       dbPath: ENGINE_DB_PATH,
+      startupReconciled,
     },
     projects,
     activeProject,
@@ -1042,7 +1072,7 @@ app.api('/api/toggle-open-loop', (data) => {
 
   let content = readFileSync(statePath, 'utf-8');
   const escapedTime = timeStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`(-\\s*\\[)[ xX](\\]\\s*\`?${escapedTime}\`?)`);
+  const regex = new RegExp(`(-\\s*\\[)[ xX](\\]\\s*\`?\\[?${escapedTime}\\]?\`?)`);
   content = content.replace(regex, `$1${done ? 'x' : ' '}$2`);
   writeFileSync(statePath, content, 'utf-8');
   return { ok: true };
@@ -1095,8 +1125,72 @@ app.api('/api/open-file', (data) => {
   return { ok: true, path: targetPath };
 });
 
+let startupReconciled = false;
+
+/**
+ * Startup Reconciliation Pulse:
+ * Automatically runs once shortly after Antigravity boots.
+ * Sends a reconcile signal to all active Orchestrator conversations so they recreate
+ * in-memory Cron and Timer tasks in RAM without requiring manual user button clicks.
+ */
+async function runStartupReconciliation() {
+  if (startupReconciled) return;
+  startupReconciled = true;
+
+  console.log('[autonomy-engine] Running Startup Auto-Reconciliation for autonomous projects...');
+  try {
+    const projects = discoverAutonomousProjects();
+    const nowStr = formatLocalTime();
+
+    for (const proj of projects) {
+      if (!proj.auto_wake) continue;
+      if (!proj.active_conversation_id) continue;
+
+      const statePath = join(proj.workspace_path, '.agents', 'cognition', 'STATE.md');
+      if (!existsSync(statePath)) continue;
+
+      // Skip if the project was woken very recently (< 60s)
+      if (isRecentlyWoken(proj, 60)) {
+        console.log(`[autonomy-engine] Project ${proj.name} was recently woken, skipping startup reconcile.`);
+        continue;
+      }
+
+      const prompt =
+        `⚡ [BHIT AUTONOMY ENGINE - STARTUP AUTO-RECONCILIATION]\n` +
+        `Thời điểm hiện tại: ${nowStr}\n` +
+        `Hệ thống phát hiện Antigravity vừa khởi động lại (Sidecar Daemon vừa boot).\n` +
+        `Runtime Antigravity đã dừng toàn bộ tiến trình chạy ngầm trong RAM (Cron/Timer) của phiên trước.\n\n` +
+        `Hãy thực hiện ngay quy trình đối soát tự động (Schedule Reconciliation):\n` +
+        `1. Đọc \`.agents/cognition/STATE.md\` và \`.agents/cognition/INBOX.md\`.\n` +
+        `2. Gọi \`manage_task(Action: "list")\` để kiểm tra danh sách task trong RAM.\n` +
+        `3. Khôi phục lại lịch trình: Tạo lại lệnh \`schedule()\` (Cron định kỳ IsDaemon: true + One-shot Timer cho mốc tiếp theo) và ghi đè các mã \`TaskId\` mới vào Mục 4 của \`STATE.md\`.\n` +
+        `4. Nếu có Open Loop nào đã quá hạn trong thời gian tắt máy, hãy thực thi bù ngay lập tức!`;
+
+      const taskKey = `${proj.workspace_path}::startup_reconcile::${Date.now()}`;
+      const res = triggerProjectWakeup(proj, {
+        taskKey,
+        taskType: 'STARTUP_RECONCILE',
+        scheduledFor: nowStr,
+        prompt,
+      });
+
+      if (res.ok) {
+        console.log(`[autonomy-engine] Startup auto-reconcile sent to ${proj.name} (${proj.active_conversation_id})`);
+      } else {
+        console.warn(`[autonomy-engine] Startup auto-reconcile skipped for ${proj.name}:`, res.reason || res.error);
+      }
+
+      // 2.5s delay between projects to avoid spikes
+      await new Promise((r) => setTimeout(r, 2500));
+    }
+  } catch (err) {
+    console.error('[autonomy-engine] Startup auto-reconciliation error:', err.message);
+  }
+}
+
 // Start HTTP Server & Persistent Background Daemon Loop
 await app.run();
 console.log('[autonomy-engine] Persistent Scheduler & UI Sidecar started.');
 setTimeout(runSchedulerTick, 4000);
+setTimeout(runStartupReconciliation, 8000);
 setInterval(runSchedulerTick, 30000);
